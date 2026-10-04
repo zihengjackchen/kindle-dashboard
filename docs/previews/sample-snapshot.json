@@ -1,0 +1,208 @@
+{
+  "schema_version": 1,
+  "demo": true,
+  "weather": {
+    "source": "Design sample",
+    "as_of": "2026-10-01T16:35:00Z",
+    "valid_until": "2026-10-01T17:00:00Z",
+    "location": "San Francisco · sample",
+    "unit": "F",
+    "temperature": 64.0,
+    "feels_like": 63.0,
+    "condition": "Clouds giving way",
+    "high": 68.0,
+    "low": 56.0,
+    "precipitation_percent": 10,
+    "forecast": [
+      {
+        "day": "FRI",
+        "condition": "Mostly sunny",
+        "high": 69.0,
+        "low": 55.0
+      },
+      {
+        "day": "SAT",
+        "condition": "Morning clouds",
+        "high": 67.0,
+        "low": 56.0
+      },
+      {
+        "day": "SUN",
+        "condition": "Clear skies",
+        "high": 70.0,
+        "low": 54.0
+      }
+    ]
+  },
+  "quotes": [
+    {
+      "source": "Design sample",
+      "as_of": "2026-10-01T16:35:00Z",
+      "valid_until": "2026-10-01T17:00:00Z",
+      "symbol": "S&P 500",
+      "price": 5600.0,
+      "change": 25.2,
+      "change_percent": 0.45,
+      "currency": "USD",
+      "session": "regular",
+      "basis": "previous close",
+      "delayed": false
+    },
+    {
+      "source": "Design sample",
+      "as_of": "2026-10-01T16:35:00Z",
+      "valid_until": "2026-10-01T17:00:00Z",
+      "symbol": "VOO",
+      "price": 510.0,
+      "change": 1.63,
+      "change_percent": 0.32,
+      "currency": "USD",
+      "session": "regular",
+      "basis": "previous close",
+      "delayed": false
+    },
+    {
+      "source": "Design sample",
+      "as_of": "2026-10-01T16:35:00Z",
+      "valid_until": "2026-10-01T17:00:00Z",
+      "symbol": "VGT",
+      "price": 600.0,
+      "change": -1.26,
+      "change_percent": -0.21,
+      "currency": "USD",
+      "session": "regular",
+      "basis": "previous close",
+      "delayed": false
+    },
+    {
+      "source": "Design sample",
+      "as_of": "2026-10-01T16:35:00Z",
+      "valid_until": "2026-10-01T17:00:00Z",
+      "symbol": "META",
+      "price": 540.0,
+      "change": 4.64,
+      "change_percent": 0.86,
+      "currency": "USD",
+      "session": "regular",
+      "basis": "previous close",
+      "delayed": false
+    },
+    {
+      "source": "Design sample",
+      "as_of": "2026-10-01T16:35:00Z",
+      "valid_until": "2026-10-01T17:00:00Z",
+      "symbol": "AMZN",
+      "price": 190.0,
+      "change": -0.65,
+      "change_percent": -0.34,
+      "currency": "USD",
+      "session": "regular",
+      "basis": "previous close",
+      "delayed": false
+    },
+    {
+      "source": "Design sample",
+      "as_of": "2026-10-01T16:35:00Z",
+      "valid_until": "2026-10-01T17:00:00Z",
+      "symbol": "GOOG",
+      "price": 175.0,
+      "change": 0.98,
+      "change_percent": 0.56,
+      "currency": "USD",
+      "session": "regular",
+      "basis": "previous close",
+      "delayed": false
+    },
+    {
+      "source": "Design sample",
+      "as_of": "2026-10-01T16:35:00Z",
+      "valid_until": "2026-10-01T17:00:00Z",
+      "symbol": "AMD",
+      "price": 160.0,
+      "change": 1.94,
+      "change_percent": 1.21,
+      "currency": "USD",
+      "session": "regular",
+      "basis": "previous close",
+      "delayed": false
+    },
+    {
+      "source": "Design sample",
+      "as_of": "2026-10-01T16:35:00Z",
+      "valid_until": "2026-10-01T17:00:00Z",
+      "symbol": "PYPL",
+      "price": 72.0,
+      "change": -0.53,
+      "change_percent": -0.74,
+      "currency": "USD",
+      "session": "regular",
+      "basis": "previous close",
+      "delayed": false
+    },
+    {
+      "source": "Design sample",
+      "as_of": "2026-10-01T16:35:00Z",
+      "valid_until": "2026-10-01T17:00:00Z",
+      "symbol": "SOFI",
+      "price": 12.0,
+      "change": 0.08,
+      "change_percent": 0.63,
+      "currency": "USD",
+      "session": "regular",
+      "basis": "previous close",
+      "delayed": false
+    },
+    {
+      "source": "Design sample",
+      "as_of": "2026-10-01T16:35:00Z",
+      "valid_until": "2026-10-01T17:00:00Z",
+      "symbol": "GRAB",
+      "price": 4.2,
+      "change": -0.01,
+      "change_percent": -0.22,
+      "currency": "USD",
+      "session": "regular",
+      "basis": "previous close",
+      "delayed": false
+    },
+    {
+      "source": "Design sample",
+      "as_of": "2026-10-01T16:35:00Z",
+      "valid_until": "2026-10-01T17:00:00Z",
+      "symbol": "BTC-USD",
+      "price": 65000.0,
+      "change": 741.0,
+      "change_percent": 1.14,
+      "currency": "USD",
+      "session": "24h",
+      "basis": "24h",
+      "delayed": false
+    },
+    {
+      "source": "Design sample",
+      "as_of": "2026-10-01T16:35:00Z",
+      "valid_until": "2026-10-01T17:00:00Z",
+      "symbol": "ETH-USD",
+      "price": 2800.0,
+      "change": -10.64,
+      "change_percent": -0.38,
+      "currency": "USD",
+      "session": "24h",
+      "basis": "24h",
+      "delayed": false
+    }
+  ],
+  "nas": {
+    "source": "Design sample",
+    "as_of": "2026-10-01T16:35:00Z",
+    "valid_until": "2026-10-01T17:00:00Z",
+    "name": "Home NAS · sample",
+    "version": "TrueNAS / example metrics",
+    "pool_health": "ONLINE",
+    "used_percent": 62.0,
+    "cpu_percent": 14.0,
+    "memory_percent": 47.0,
+    "alerts": 0,
+    "uptime": "18 days"
+  }
+}

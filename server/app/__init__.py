@@ -1,0 +1,1 @@
+"""Kindle dashboard image service."""

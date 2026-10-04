@@ -1,0 +1,15 @@
+{
+  "items": [{
+    "name": "Dashboard",
+    "items": [
+      {"name": "Start Dashboard", "priority": 1, "action": "sh ./start.sh", "exitmenu": true, "status": false},
+      {"name": "Refresh Dashboard", "priority": 2, "action": "sh ./refresh-once.sh", "exitmenu": true, "status": false},
+      {"name": "Next Dashboard (cached)", "priority": 3, "action": "sh ./page.sh next", "exitmenu": true, "status": false},
+      {"name": "Previous Dashboard (cached)", "priority": 4, "action": "sh ./page.sh previous", "exitmenu": true, "status": false},
+      {"name": "Refresh All Pages", "priority": 5, "action": "sh ./refresh-pages.sh", "exitmenu": true, "status": false},
+      {"name": "Stop Dashboard", "priority": 6, "action": "sh ./stop.sh", "exitmenu": false, "refresh": true, "status": false},
+      {"name": "Show Diagnostics (save report)", "priority": 7, "action": "sh ./diagnostics.sh", "exitmenu": false, "status": false, "internal": "status Report: extensions/dashboard/logs/diagnostics.txt"},
+      {"name": "Record Battery Sample", "priority": 8, "action": "sh ./sample-battery.sh", "exitmenu": false, "status": false, "internal": "status Saved: extensions/dashboard/logs/battery.csv"}
+    ]
+  }]
+}

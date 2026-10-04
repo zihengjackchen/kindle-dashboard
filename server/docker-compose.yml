@@ -1,0 +1,53 @@
+services:
+  dashboard:
+    build: .
+    image: kindle-dashboard:local
+    ports:
+      - "${BIND_ADDRESS:-0.0.0.0}:8080:8080"
+    environment:
+      API_TOKEN: "${API_TOKEN:-}"
+      DASHBOARD_TIMEZONE: "${DASHBOARD_TIMEZONE:-UTC}"
+      DASHBOARD_SNAPSHOT_PATH: /data/snapshot.json
+      DASHBOARD_STATE_PATH: /state/contacts.json
+    volumes:
+      - ./data:/data:ro
+      - contact-state:/state
+    restart: unless-stopped
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    tmpfs:
+      - /tmp:size=16m
+    mem_limit: 256m
+    pids_limit: 64
+    logging:
+      driver: json-file
+      options:
+        max-size: "2m"
+        max-file: "2"
+  collector:
+    profiles: [live]
+    build: .
+    image: kindle-dashboard:local
+    command: [python, -m, app.collect, --loop]
+    env_file: .env
+    environment:
+      DASHBOARD_SNAPSHOT_PATH: /data/snapshot.json
+      NAS_SNAPSHOT_PATH: /data/nas.json
+    volumes:
+      - ./data:/data
+    restart: unless-stopped
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    healthcheck:
+      disable: true
+    mem_limit: 128m
+    pids_limit: 32
+    logging:
+      driver: json-file
+      options:
+        max-size: "2m"
+        max-file: "2"
+volumes:
+  contact-state:

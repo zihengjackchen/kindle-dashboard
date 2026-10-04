@@ -1,0 +1,7 @@
+* text=auto
+*.sh text eol=lf
+*.awk text eol=lf
+*.py text eol=lf
+*.json text eol=lf
+*.xml text eol=lf
+*.png binary

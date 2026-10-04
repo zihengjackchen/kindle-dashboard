@@ -1,0 +1,18 @@
+{
+  "status": "proposed-not-yet-loaded-by-server",
+  "profile": "home",
+  "instruments": [
+    {"id": "index:sp500", "label": "S&P 500", "kind": "index", "page": "markets-1"},
+    {"id": "us:VOO", "label": "VOO", "kind": "etf", "page": "markets-1"},
+    {"id": "us:VGT", "label": "VGT", "kind": "etf", "page": "markets-1"},
+    {"id": "us:META", "label": "META", "kind": "equity", "page": "markets-1"},
+    {"id": "us:AMZN", "label": "AMZN", "kind": "equity", "page": "markets-1"},
+    {"id": "us:GOOG", "label": "GOOG", "kind": "equity", "page": "markets-1"},
+    {"id": "us:AMD", "label": "AMD", "kind": "equity", "page": "markets-2"},
+    {"id": "us:PYPL", "label": "PYPL", "kind": "equity", "page": "markets-2"},
+    {"id": "us:SOFI", "label": "SOFI", "kind": "equity", "page": "markets-2"},
+    {"id": "us:GRAB", "label": "GRAB", "kind": "equity", "page": "markets-2"},
+    {"id": "crypto:BTC-USD", "label": "BTC-USD", "kind": "crypto", "page": "markets-2"},
+    {"id": "crypto:ETH-USD", "label": "ETH-USD", "kind": "crypto", "page": "markets-2"}
+  ]
+}

@@ -1,0 +1,103 @@
+"""Bounded persisted source snapshots. Rendering never performs network work."""
+import logging
+from datetime import datetime
+from pathlib import Path
+from typing import Literal
+from pydantic import AwareDatetime, BaseModel, ConfigDict, Field, model_validator
+
+WATCHLIST = ("S&P 500", "VOO", "VGT", "META", "AMZN", "GOOG", "AMD", "PYPL", "SOFI", "GRAB", "BTC-USD", "ETH-USD")
+
+
+class Record(BaseModel):
+    model_config = ConfigDict(extra="forbid", allow_inf_nan=False)
+    source: str = Field(min_length=1, max_length=60)
+    as_of: AwareDatetime
+    valid_until: AwareDatetime
+
+    @model_validator(mode="after")
+    def valid_dates(self):
+        if self.valid_until < self.as_of:
+            raise ValueError("valid_until precedes as_of")
+        return self
+
+    def status(self, now: datetime) -> str:
+        if self.as_of > now:
+            return "CHECK TIME"
+        return "STALE" if now > self.valid_until else "CURRENT"
+
+
+class Forecast(BaseModel):
+    model_config = ConfigDict(extra="forbid", allow_inf_nan=False)
+    day: str = Field(max_length=12)
+    condition: str = Field(max_length=40)
+    high: float = Field(ge=-150, le=160)
+    low: float = Field(ge=-150, le=160)
+
+
+class Weather(Record):
+    location: str = Field(min_length=1, max_length=60)
+    unit: Literal["F", "C"]
+    temperature: float = Field(ge=-150, le=160)
+    feels_like: float | None = Field(default=None, ge=-150, le=160)
+    condition: str = Field(max_length=50)
+    high: float = Field(ge=-150, le=160)
+    low: float = Field(ge=-150, le=160)
+    precipitation_percent: int = Field(ge=0, le=100)
+    forecast: list[Forecast] = Field(default_factory=list, max_length=4)
+
+
+class Quote(Record):
+    symbol: str = Field(min_length=1, max_length=16)
+    price: float = Field(ge=0, le=1e12)
+    change: float
+    change_percent: float
+    currency: Literal["USD"] = "USD"
+    session: Literal["regular", "closed", "premarket", "afterhours", "24h"]
+    basis: Literal["previous close", "24h"]
+    delayed: bool = False
+
+
+class NAS(Record):
+    name: str = Field(max_length=40)
+    version: str = Field(max_length=40)
+    pool_health: Literal["ONLINE", "DEGRADED", "FAULTED", "UNKNOWN"]
+    used_percent: float | None = Field(default=None, ge=0, le=100)
+    cpu_percent: float | None = Field(default=None, ge=0, le=100)
+    memory_percent: float | None = Field(default=None, ge=0, le=100)
+    alerts: int = Field(ge=0, le=10000)
+    uptime: str = Field(max_length=40)
+
+
+class Snapshot(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    schema_version: Literal[1] = 1
+    demo: bool = False
+    weather: Weather | None = None
+    quotes: list[Quote] = Field(default_factory=list, max_length=12)
+    nas: NAS | None = None
+
+    @model_validator(mode="after")
+    def unique_quotes(self):
+        symbols = [q.symbol for q in self.quotes]
+        if len(symbols) != len(set(symbols)) or not set(symbols) <= set(WATCHLIST):
+            raise ValueError("Duplicate or unknown symbol")
+        for q in self.quotes:
+            if q.basis != ("24h" if q.symbol in ("BTC-USD", "ETH-USD") else "previous close"):
+                raise ValueError("Incorrect change basis")
+        return self
+
+
+def load_snapshot(path: str) -> Snapshot:
+    if not path:
+        return Snapshot()
+    try:
+        with Path(path).open("rb") as stream:
+            raw = stream.read(262145)
+        if len(raw) > 262144:
+            raise ValueError("Snapshot exceeds 256 KiB")
+        return Snapshot.model_validate_json(raw)
+    except FileNotFoundError:
+        return Snapshot()
+    except (OSError, ValueError):
+        logging.getLogger("dashboard").error("Snapshot missing or invalid; rendering unavailable data")
+        return Snapshot()

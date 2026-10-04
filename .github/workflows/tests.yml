@@ -1,0 +1,61 @@
+name: checks
+on: [push, pull_request, workflow_dispatch]
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - run: sudo apt-get update && sudo apt-get install -y shellcheck wget
+      - run: pip install -r server/requirements-dev.txt
+      - run: python -m pytest -q
+      - run: shellcheck -x -P SCRIPTDIR kindle-client/extensions/dashboard/*.sh kindle-client/extensions/dashboard/lib/*.sh scripts/test-shell.sh
+      - run: cp server/.env.example server/.env
+      - run: sudo chown 10001:10001 server/data
+      - run: docker compose -f server/docker-compose.yml up -d --build --wait
+      - run: |
+          curl --fail http://127.0.0.1:8080/health
+          curl --fail 'http://127.0.0.1:8080/dashboard.png?width=600&height=800&battery=73&charging=0' -o /tmp/dashboard.png
+          python -c "from PIL import Image; im=Image.open('/tmp/dashboard.png'); im.load(); assert im.mode == 'L' and im.size == (600, 800)"
+          curl --fail http://127.0.0.1:8080/status
+          docker compose -f server/docker-compose.yml run --rm --no-deps collector python -m app.collect
+      - run: python scripts/package-client.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: kindle-dashboard-client
+          path: dist/kindle-dashboard-client.zip
+      - if: always()
+        run: docker compose -f server/docker-compose.yml down
+  publish:
+    needs: test
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-qemu-action@v3
+      - uses: docker/setup-buildx-action@v3
+      - name: Image name
+        run: echo "IMAGE=ghcr.io/${GITHUB_REPOSITORY,,}" >> "$GITHUB_ENV"
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: docker/build-push-action@v6
+        with:
+          context: server
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: |
+            ${{ env.IMAGE }}:latest
+            ${{ env.IMAGE }}:sha-${{ github.sha }}
+          labels: |
+            org.opencontainers.image.source=https://github.com/${{ github.repository }}
+            org.opencontainers.image.licenses=MIT

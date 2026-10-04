@@ -1,0 +1,17 @@
+.venv/
+.tools/
+kindle-client/extensions/dashboard/config.local.sh
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.env
+server/.env
+dist/
+server/data/*
+!server/data/.gitkeep
+kindle-client/extensions/dashboard/cache/*
+!kindle-client/extensions/dashboard/cache/.gitkeep
+kindle-client/extensions/dashboard/state/*
+!kindle-client/extensions/dashboard/state/.gitkeep
+kindle-client/extensions/dashboard/logs/*
+!kindle-client/extensions/dashboard/logs/.gitkeep

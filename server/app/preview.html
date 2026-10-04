@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Daylight · Kindle Dashboard</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#f3f1eb;color:#242724;font:16px system-ui,sans-serif}
+main{max-width:1180px;margin:0 auto;padding:40px 24px}header{border-bottom:1px solid #b9bdb3;padding-bottom:24px;display:flex;justify-content:space-between;align-items:center}
+h1{font-size:36px;letter-spacing:-1.5px;margin:4px 0}small{letter-spacing:2px;font-size:11px}p{line-height:1.6;color:#565e53}section{display:grid;grid-template-columns:320px 1fr;gap:48px;margin-top:32px}
+label{display:block;font-size:13px;margin:18px 0 7px}input,select,button{font:inherit;border-radius:8px;padding:11px;width:100%;border:1px solid #b9bdb3;background:white}button{background:#243b31;color:white;border:0;margin-top:20px;cursor:pointer}button:disabled{opacity:.5}
+img{width:100%;max-width:550px;box-shadow:0 8px 36px #0002;border-radius:4px}pre{font:12px ui-monospace,monospace;white-space:pre-wrap;overflow-wrap:anywhere;background:#e9e8e1;padding:16px;border-radius:8px}#message{min-height:25px}a{color:#243b31}.note{font-size:13px}@media(max-width:750px){section{grid-template-columns:1fr}main{padding:24px}header span{display:none}}
+</style>
+<main><header><div><small>PERSONAL DASHBOARD</small><h1>Daylight</h1></div><span>Made for a quieter screen.</span></header>
+<section><div><h2>Your Kindle, at a glance.</h2><p>Preview a page and check the latest device contact. The Kindle keeps its last image when your network is unavailable.</p>
+<label for="token">Dashboard token</label><input id="token" type="password" autocomplete="off" placeholder="Only if configured">
+<label for="page">Page</label><select id="page"><option value="overview">At a glance</option><option value="weather">Weather</option><option value="markets-1">Markets · 01</option><option value="markets-2">Markets · 02</option><option value="nas">Home server</option></select>
+<label for="size">Display resolution</label><select id="size"><option>1236x1648</option><option>1072x1448</option><option>758x1024</option><option>600x800</option></select>
+<button id="load">Preview and check connection</button><p id="message" role="status"></p><p class="note">Your token stays in this tab’s memory. Preview requests do not count as Kindle contact. No automatic browser polling.</p><pre id="status">No connection checked yet.</pre></div>
+<div><img id="preview" alt="Dashboard preview appears after connecting" hidden></div></section></main>
+<script>
+let imageUrl;
+document.querySelector('#load').onclick=async()=>{
+ const button=document.querySelector('#load'), message=document.querySelector('#message');button.disabled=true;
+ try{
+  const token=document.querySelector('#token').value,headers=token?{Authorization:'Bearer '+token}:{};
+  const [width,height]=document.querySelector('#size').value.split('x');
+  const query=new URLSearchParams({width,height,page:document.querySelector('#page').value,device:'preview'});
+  const [image,status]=await Promise.all([fetch('/dashboard.png?'+query,{headers}),fetch('/status',{headers})]);
+  if(!image.ok||!status.ok)throw Error(image.status===401?'Token rejected. Check your NAS configuration.':'Request failed. Check service logs.');
+  if(imageUrl)URL.revokeObjectURL(imageUrl);imageUrl=URL.createObjectURL(await image.blob());
+  document.querySelector('#preview').src=imageUrl;document.querySelector('#preview').hidden=false;
+  document.querySelector('#status').textContent=JSON.stringify(await status.json(),null,2);message.textContent='Connected. Preview generated just now.';
+ }catch(error){message.textContent=error.message}finally{button.disabled=false}
+};
+</script></html>

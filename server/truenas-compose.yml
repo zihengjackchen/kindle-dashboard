@@ -1,0 +1,54 @@
+# TrueNAS SCALE 24.10+ Custom App / Install via YAML.
+# Replace YOUR_OWNER, YOUR_TOKEN and POOL; configure weather/market fields below.
+services:
+  dashboard:
+    image: ghcr.io/YOUR_OWNER/kindle-dashboard:latest
+    ports: ["8080:8080"]
+    environment:
+      API_TOKEN: YOUR_TOKEN
+      DASHBOARD_TIMEZONE: America/Los_Angeles
+      DASHBOARD_SNAPSHOT_PATH: /data/snapshot.json
+      DASHBOARD_STATE_PATH: /state/contacts.json
+    volumes:
+      - /mnt/POOL/apps/kindle-dashboard/data:/data:ro
+      - contact-state:/state
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    tmpfs: [/tmp:size=16m]
+    restart: unless-stopped
+    mem_limit: 256m
+    pids_limit: 64
+    logging:
+      driver: json-file
+      options: {max-size: 2m, max-file: "2"}
+  collector:
+    image: ghcr.io/YOUR_OWNER/kindle-dashboard:latest
+    command: [python, -m, app.collect, --loop]
+    environment:
+      DASHBOARD_TIMEZONE: America/Los_Angeles
+      DASHBOARD_SNAPSHOT_PATH: /data/snapshot.json
+      NAS_SNAPSHOT_PATH: /data/nas.json
+      WEATHER_LATITUDE: ""
+      WEATHER_LONGITUDE: ""
+      WEATHER_LOCATION: ""
+      WEATHER_UNIT: F
+      TWELVE_DATA_API_KEY: ""
+      TWELVE_DATA_SP500_SYMBOL: SPX
+      MARKET_DATA_DELAYED: "1"
+      CRYPTO_ENABLED: "0"
+      COLLECT_INTERVAL_SECONDS: "3600"
+    volumes:
+      - /mnt/POOL/apps/kindle-dashboard/data:/data
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    restart: unless-stopped
+    mem_limit: 128m
+    pids_limit: 32
+    healthcheck: {disable: true}
+    logging:
+      driver: json-file
+      options: {max-size: 2m, max-file: "2"}
+volumes:
+  contact-state:

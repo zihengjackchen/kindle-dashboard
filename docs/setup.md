@@ -54,6 +54,10 @@ Live collection runs on the NAS once an hour (configurable, minimum 15 minutes).
 It does **not** schedule Kindle wakeups or refresh its screen. Restart the collector
 after changing configuration. Market calls are spaced eight seconds apart and a
 ten-instrument collection takes over a minute; individual failures retain old data.
+Both services have Docker health checks. The collector check confirms recent
+snapshot publication, not upstream freshness; `/status` exposes source timestamps.
+For a deployment that waits for readiness, use
+`docker compose --profile live up -d --build --wait --wait-timeout 300`.
 
 ## Configure live sources
 

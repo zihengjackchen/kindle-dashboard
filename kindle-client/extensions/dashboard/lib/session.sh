@@ -20,9 +20,9 @@ display_allowed() {
 wake_profile_valid() {
     [ "$WAKE_RESTORE" = 1 ] || return 1
     if [ "$MOCK_MODE" = 1 ]; then return 0; fi
-    [ -n "$WAKE_VERIFIED_MODEL" ] && [ -n "$WAKE_VERIFIED_FIRMWARE" ] || { fail 'Wake profile needs verified model and firmware'; return 1; }
-    [ "$MODEL" = "$WAKE_VERIFIED_MODEL" ] && [ "$FIRMWARE" = "$WAKE_VERIFIED_FIRMWARE" ] || { fail 'Wake profile does not match this model/firmware'; return 1; }
-    [ -n "$WAKE_UNLOCK_SOURCE" ] && [ -n "$WAKE_UNLOCK_PROPERTY" ] && [ -n "$WAKE_UNLOCK_VALUE" ] || { fail 'Wake profile needs a read-only lockscreen-exit guard'; return 1; }
+    if [ -z "$WAKE_VERIFIED_MODEL" ] || [ -z "$WAKE_VERIFIED_FIRMWARE" ]; then fail 'Wake profile needs verified model and firmware'; return 1; fi
+    if [ "$MODEL" != "$WAKE_VERIFIED_MODEL" ] || [ "$FIRMWARE" != "$WAKE_VERIFIED_FIRMWARE" ]; then fail 'Wake profile does not match this model/firmware'; return 1; fi
+    if [ -z "$WAKE_UNLOCK_SOURCE" ] || [ -z "$WAKE_UNLOCK_PROPERTY" ] || [ -z "$WAKE_UNLOCK_VALUE" ]; then fail 'Wake profile needs a read-only lockscreen-exit guard'; return 1; fi
     if ! command -v "$LIPC_WAIT_BIN" >/dev/null 2>&1 || ! command -v timeout >/dev/null 2>&1; then
         fail 'Wake listener needs lipc-wait-event and timeout'; return 1
     fi

@@ -28,14 +28,14 @@ init_client() {
     for config_number in "$CONNECT_TIMEOUT_SECONDS" "$DOWNLOAD_TIMEOUT_SECONDS" "$KUAL_SETTLE_SECONDS" "$WAKE_SETTLE_SECONDS" "$MAX_IMAGE_BYTES" "$MAX_LOG_BYTES"; do
         is_uint "$config_number" || { printf 'Invalid numeric configuration\n' >&2; return 1; }
     done
-    [ "$CONNECT_TIMEOUT_SECONDS" -ge 1 ] && [ "$CONNECT_TIMEOUT_SECONDS" -le 60 ] &&
+    if ! { [ "$CONNECT_TIMEOUT_SECONDS" -ge 1 ] && [ "$CONNECT_TIMEOUT_SECONDS" -le 60 ] &&
         [ "$DOWNLOAD_TIMEOUT_SECONDS" -ge 1 ] && [ "$DOWNLOAD_TIMEOUT_SECONDS" -le 120 ] &&
         [ "$KUAL_SETTLE_SECONDS" -le 10 ] &&
         [ "$WAKE_SETTLE_SECONDS" -le 5 ] &&
         [ "$MAX_IMAGE_BYTES" -ge 1024 ] && [ "$MAX_IMAGE_BYTES" -le 8388608 ] &&
-        [ "$MAX_LOG_BYTES" -ge 1024 ] && [ "$MAX_LOG_BYTES" -le 1048576 ] || {
+        [ "$MAX_LOG_BYTES" -ge 1024 ] && [ "$MAX_LOG_BYTES" -le 1048576 ]; }; then
             printf 'Configuration limits invalid; see config.sh\n' >&2; return 1;
-        }
+    fi
 }
 
 log() {

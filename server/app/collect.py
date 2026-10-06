@@ -148,13 +148,25 @@ def collect_once(env=None, fetch=get_json, wait=STOP.wait):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--loop", action="store_true", help="Run on the NAS only, hourly by default")
+    parser.add_argument("--healthcheck", action="store_true", help="Check collection progress without contacting providers")
     args = parser.parse_args()
     logging.basicConfig(level=logging.INFO)
     interval = max(900, min(86400, int(os.getenv("COLLECT_INTERVAL_SECONDS", "3600"))))
+    if args.healthcheck:
+        raise SystemExit(0 if collection_healthy(os.getenv("DASHBOARD_SNAPSHOT_PATH", "/data/snapshot.json"), interval) else 1)
     for sig in (signal.SIGINT, signal.SIGTERM): signal.signal(sig, lambda *_: STOP.set())
     while not STOP.is_set():
         collect_once()
         if not args.loop or STOP.wait(interval): break
+
+
+def collection_healthy(path, interval, now=None):
+    """Fresh file publication proves the loop ran, not that every provider is fresh."""
+    try:
+        age = (now or datetime.now(timezone.utc).timestamp()) - Path(path).stat().st_mtime
+        return -60 <= age <= max(900, min(86400, interval)) + 300
+    except OSError:
+        return False
 
 
 if __name__ == "__main__": main()

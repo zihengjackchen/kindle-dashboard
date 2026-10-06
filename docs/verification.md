@@ -34,8 +34,9 @@ curl 8.16.0, and ShellCheck 0.11.0.
   that its httpx integration will eventually move to httpx2. Tests pass with the
   pinned httpx version; this does not affect the deployed image endpoint.
 
-Not verified here: Docker image build/runtime (no Docker installation), GNU wget
-runtime, physical Kindle display/KUAL interaction, and any suspend behavior.
+At this initial Windows checkpoint Docker image execution and GNU wget were not
+available; the subsequent NAS deployment is recorded below. Physical Kindle
+display/KUAL interaction and suspend behavior remain unverified.
 Git Bash lacks a file-size resource limit; explicit mock mode permits this while
 retaining curl's size checks and post-download validation. Real Kindle mode
 requires the shell resource limit to succeed. Linux testing remains valuable.
@@ -46,3 +47,31 @@ At this local verification checkpoint, GitHub authentication was unavailable;
 remote workflow results must be checked separately after publication.
 Use `docs/hardware-testing.md` for the remaining physical-device checks. No claim
 of measured battery savings or persistent display across sleep has been made.
+
+## NAS deployment, 2026-10-05
+
+Built and started the image on TrueNAS SCALE 24.10.2.4 (amd64), Docker Engine
+27.1.1 and Compose 2.29.1. Both the renderer and collector report healthy and
+recover through a controlled restart/recreate. They run as UID 10001 with
+read-only root filesystems, bounded memory, and restart policy `unless-stopped`.
+
+The live LAN endpoint passed authentication rejection, health/status checks, and
+PNG decoding/header/dimension checks for all five 1236x1648 pages. The real shell
+client fetched all five pages from the deployed NAS and validated/cached them;
+framebuffer drawing was mocked. No synthetic Kindle contact was recorded.
+
+Live NAS health, BTC and ETH data were collected. Weather location and equity
+provider credentials remain unconfigured. The TrueNAS host export was verified
+through the native scheduled-task runner, with a 15-minute schedule. Existing
+NAS applications remained running during installation.
+
+Deployment exposed a Compose readiness error for a collector without a health
+check. Added a bounded publication-age check and verified `up --wait` succeeds.
+Older Linux ShellCheck also flagged ambiguous shell condition style; conditions
+were rewritten as explicit `if` statements without changing the policy.
+
+The full suite then passed inside a disposable Linux container on the NAS:
+**100 passed**, no skips, one existing Starlette/httpx deprecation warning.
+GNU wget, curl, and Linux ShellCheck were included in that validation container;
+no test tools were installed into the NAS host or production containers.
+The validation container was removed after completion.

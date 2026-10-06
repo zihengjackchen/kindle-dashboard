@@ -41,7 +41,11 @@ services:
     cap_drop: [ALL]
     security_opt: [no-new-privileges:true]
     healthcheck:
-      disable: true
+      test: [CMD, python, -m, app.collect, --healthcheck]
+      interval: 60s
+      timeout: 5s
+      start_period: 5m
+      retries: 3
     mem_limit: 128m
     pids_limit: 32
     logging:

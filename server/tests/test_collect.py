@@ -65,3 +65,15 @@ def test_partial_markets_failure_and_rate_spacing(tmp_path):
     errors = collect_once({"DASHBOARD_SNAPSHOT_PATH": str(path), "TWELVE_DATA_API_KEY": "hidden"}, fetch, lambda seconds: waits.append(seconds))
     assert len(errors) == 9 and waits == [8]*9
     assert [q.symbol for q in load_snapshot(str(path)).quotes] == ["AMD"]
+
+
+def test_collection_health_detects_stalled_loop_without_fetching(tmp_path):
+    from app.collect import collection_healthy
+    import os
+    path = tmp_path / 'snapshot.json'
+    assert not collection_healthy(path, 900, now=5000)
+    path.write_text('{}')
+    os.utime(path, (4000, 4000))
+    assert collection_healthy(path, 900, now=5000)
+    assert not collection_healthy(path, 900, now=5300)
+    assert not collection_healthy(path, 900, now=3000)

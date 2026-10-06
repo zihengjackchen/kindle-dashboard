@@ -46,7 +46,12 @@ services:
     restart: unless-stopped
     mem_limit: 128m
     pids_limit: 32
-    healthcheck: {disable: true}
+    healthcheck:
+      test: [CMD, python, -m, app.collect, --healthcheck]
+      interval: 60s
+      timeout: 5s
+      start_period: 5m
+      retries: 3
     logging:
       driver: json-file
       options: {max-size: 2m, max-file: "2"}

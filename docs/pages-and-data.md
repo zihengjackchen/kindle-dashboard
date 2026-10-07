@@ -16,7 +16,8 @@ avoids caching an old server's generic page under the wrong name. The proposed
 
 White background, large headings, generous margins, aligned quote columns,
 grayscale weather panels and explicit signed changes replace the old placeholder
-page. Every page has its number, generation timestamp and source times. All
+page. The editable overview uses a compact widget grid; detail pages retain
+their page numbers. Every page has a generation timestamp and source times. All
 freshness/status labels describe conditions at image generation. A cached PNG
 cannot update those labels while offline; use its dates to judge age.
 
@@ -49,7 +50,7 @@ selected page. Direct taps on the dashboard itself are not implemented.
 ## Supply source data without fake live values
 
 `server/app/snapshots.py` defines a validated JSON schema for weather, watchlist
-quotes and NAS metrics. A complete example is
+quotes, NAS metrics and optional ChatGPT usage summaries. A complete example is
 `docs/previews/sample-snapshot.json`. Records contain source name, timezone-aware
 `as_of` and `valid_until`. Expired values remain visible as STALE with their
 original source time. Future source timestamps render CHECK TIME. Quote basis is
@@ -75,11 +76,18 @@ original as_of on failure and publish complete merged snapshots; do not advance
 timestamps just because the file is rewritten.
 
 **Optional live adapters are implemented.** See [setup.md](setup.md) for
-Open-Meteo weather, Twelve Data equities/index, Coinbase crypto, and the TrueNAS
+Open-Meteo weather, Finnhub or Twelve Data equities/index, Coinbase crypto, and the TrueNAS
 host snapshot exporter. Location, keys/entitlements and host version still need
 deployment configuration. The snapshot boundary keeps credentials and management
 access off the Kindle. Do not manually publish into a file owned by the running
 collector. No brokerage or portfolio data is accepted by the current schema.
+
+The overview editor can select from the original 12 instruments plus AAPL, TSLA,
+GOOGL, MSFT, NFLX, NVDA, ADBE, SCHD, SPY, DIA, QQQ, IWM, TLT, GLD and DBC.
+`MARKET_SYMBOLS` controls which equities the collector fetches. The two detail
+market pages retain the original screenshot watchlist. GOOG and GOOGL remain
+distinct. Imported BTCUSDC/ETHUSDC entries identify the assets; the dashboard
+continues to display Coinbase BTC-USD/ETH-USD quotes, not Binance USDC prices.
 
 To regenerate the design examples only:
 

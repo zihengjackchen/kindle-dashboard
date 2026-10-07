@@ -65,10 +65,12 @@ For a deployment that waits for readiness, use
 | --- | --- | --- |
 | Weather | `WEATHER_LATITUDE`, `WEATHER_LONGITUDE`, `WEATHER_LOCATION`, `WEATHER_UNIT` | Open-Meteo current conditions and three following days; no key for its public noncommercial service |
 | Equities/ETFs/index | `TWELVE_DATA_API_KEY` | Exact watchlist; account plan, quota and instrument entitlements apply |
+| Finnhub equities/ETFs | `FINNHUB_API_KEY`, optional `MARKET_SYMBOLS` | Preferred when this key is set; header authentication and two-second request spacing. Session is unknown because the quote endpoint does not report it. |
 | S&P 500 | `TWELVE_DATA_SP500_SYMBOL=SPX` | Verify the provider's index symbol and your entitlement; never silently substitute an ETF |
 | Market delay label | `MARKET_DATA_DELAYED=1` | Conservative default; change only when your account's data entitlement supports it |
 | BTC/ETH | `CRYPTO_ENABLED=1` | Coinbase public USD product statistics, rolling 24-hour change; timestamp explicitly means observed at |
 | TrueNAS | `NAS_SNAPSHOT_PATH=/data/nas.json` | Reads the limited host export described below |
+| ChatGPT usage | `CHATGPT_SNAPSHOT_PATH=/data/chatgpt.json` | Reads a filtered snapshot exported from a signed-in PC; see [usage sync](chatgpt-usage.md) |
 
 Weather and quote source timestamps are retained when a fetch fails. Missing data
 stays unavailable; synthetic prices are never used outside the labeled previews.
@@ -79,6 +81,7 @@ data; lower its interval to 900 seconds when using a 15-minute NAS export.
 Provider access is a deployment prerequisite, not included with this repository.
 
 Provider references: [Open-Meteo](https://open-meteo.com/en/docs),
+[Finnhub quote API](https://finnhub.io/docs/api/quote),
 [Twelve Data](https://twelvedata.com/docs),
 [Coinbase product statistics](https://docs.cdp.coinbase.com/api-reference/exchange-api/rest-api/products/get-product-stats).
 Review the provider's applicable usage and display terms for your deployment.

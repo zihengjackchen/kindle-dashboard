@@ -62,10 +62,14 @@ def stamp(record, now, tz):
     return f"{record.status(now)} / {record.as_of.astimezone(tz):%Y-%m-%d %H:%M %Z} / {record.source}"
 
 
-def render_dashboard(data: DashboardRequest, settings: Settings, now: datetime | None = None, snapshot: Snapshot | None = None) -> bytes:
+def render_dashboard(data: DashboardRequest, settings: Settings, now: datetime | None = None, snapshot: Snapshot | None = None, layout=None) -> bytes:
     tz = ZoneInfo(settings.timezone)
     now = (now or datetime.now(tz)).astimezone(tz)
     snapshot = snapshot if snapshot is not None else load_snapshot(settings.snapshot_path)
+    if data.page == "overview":
+        from .layout import Layout
+        from .widgets import render_overview
+        return render_overview(data, settings, snapshot, now, layout or Layout())
     c = Canvas(data.width, data.height, settings)
     c.text("DAYLIGHT / PERSONAL DASHBOARD", .065, .037, 25, bold=True, max_width=.64)
     battery = "BATTERY —" if data.battery is None else f"{data.battery}%" + (" +" if data.charging else "")
@@ -81,9 +85,7 @@ def render_dashboard(data: DashboardRequest, settings: Settings, now: datetime |
         subtitle = {"overview": "A quieter view of your day.", "weather": "Outside, today and tomorrow.",
                     "markets-1": "WATCHLIST 01 / USD", "markets-2": "WATCHLIST 02 / USD", "nas": "Your infrastructure, at a glance."}[data.page]
         c.text(subtitle, .065, .232, 30, color=70)
-    if data.page == "overview":
-        draw_overview(c, snapshot, now, tz)
-    elif data.page == "weather":
+    if data.page == "weather":
         draw_weather(c, snapshot, now, tz)
     elif data.page.startswith("markets"):
         draw_markets(c, snapshot, now, tz, 0 if data.page == "markets-1" else 6)
@@ -98,35 +100,13 @@ def render_dashboard(data: DashboardRequest, settings: Settings, now: datetime |
     return output.getvalue()
 
 
-def draw_overview(c, snapshot, now, tz):
-    w = snapshot.weather
-    c.box(.065, .285, .87, .245)
-    c.text(w.location.upper() if w else "YOUR WEATHER", .09, .307, 26, bold=True, max_width=.7)
-    c.text(f"{w.temperature:.0f}°{w.unit}" if w else "—°", .09, .352, 116, bold=True, max_width=.42)
-    c.text(w.condition if w else "Location not configured", .52, .371, 34, bold=True, max_width=.37)
-    c.text(f"H {w.high:.0f}° / L {w.low:.0f}°" if w else "Forecast unavailable", .52, .412, 29, max_width=.37)
-    c.text(stamp(w, now, tz), .09, .491, 22, color=65, max_width=.82)
-    c.text("MARKET SNAPSHOT", .065, .566, 27, bold=True)
-    quotes = {q.symbol: q for q in snapshot.quotes}
-    for index, symbol in enumerate(("S&P 500", "VOO", "GOOG", "BTC-USD")):
-        q = quotes.get(symbol)
-        y = .611 + index*.059
-        c.text(symbol, .065, y, 34, bold=True, max_width=.27)
-        c.text(f"{q.price:,.2f}" if q else "—", .63, y, 34, right=True, max_width=.28)
-        c.text(f"{q.change_percent:+.2f}%" if q else "NO DATA", .935, y, 30, right=True, max_width=.25)
-        detail = f"{q.status(now)}{' / DELAYED' if q.delayed else ''} / {q.as_of.astimezone(tz):%Y-%m-%d %H:%M} / {q.basis}" if q else "Source not connected"
-        c.text(detail, .065, y+.029, 18, color=75, max_width=.86)
-        c.line(y+.052, shade=215)
-    n = snapshot.nas
-    c.text(f"NAS {n.pool_health} / {n.status(now)} / {n.as_of.astimezone(tz):%Y-%m-%d %H:%M}" if n else "NAS / HEALTH SOURCE NOT CONNECTED", .065, .866, 23, bold=True, max_width=.87)
-
-
 def draw_weather(c, snapshot, now, tz):
+    from .widgets import temperatures
     w = snapshot.weather
     c.text(w.location.upper() if w else "CHOOSE A WEATHER LOCATION", .065, .295, 30, bold=True)
-    c.text(f"{w.temperature:.0f}°{w.unit}" if w else "—°", .065, .354, 182, bold=True, max_width=.8)
+    c.text(temperatures(w.temperature,w.unit) if w else "—°", .065, .354, 110, bold=True, max_width=.87)
     c.text(w.condition if w else "Weather source not connected", .065, .493, 46, bold=True)
-    metrics = (("HIGH / LOW", f"{w.high:.0f}° / {w.low:.0f}°" if w else "— / —"),
+    metrics = ((f"HIGH / LOW ({w.unit})" if w else "HIGH / LOW", f"{w.high:.0f}° / {w.low:.0f}°" if w else "— / —"),
                ("RAIN CHANCE", f"{w.precipitation_percent}%" if w else "—"),
                ("FEELS LIKE", f"{w.feels_like:.0f}°" if w and w.feels_like is not None else "—"))
     for i, (label, value) in enumerate(metrics):

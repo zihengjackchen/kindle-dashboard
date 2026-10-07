@@ -1,7 +1,9 @@
 # PNG service
 
-Routes are `GET /health`, `GET /dashboard.png`, authenticated `GET /status`, and
-the browser preview at `GET /`. The service has no database, control endpoints,
+Routes are `GET /health`, `GET /dashboard.png`, authenticated `GET /status`,
+`GET /layout`, `PUT /layout`, `POST /preview.png`, and the dashboard studio at `GET /`.
+See [the editor guide](../docs/dashboard-editor.md) for layout controls and API details.
+The service has no database, system control endpoints,
 or Docker socket. An optional separate NAS collector performs provider calls;
 the image request path never does.
 Health returns `{"status":"ok"}` without authentication. The image endpoint uses
@@ -76,6 +78,8 @@ for publishing and the source schema. Optional live adapters and their setup are
 documented in [setup](../docs/setup.md); absent data renders unavailable, never
 synthetic design fixtures. Compose mounts a separate writable contact-state
 volume, owned by UID 10001. Only the collector needs write access to `data/`.
+The same state volume holds `DASHBOARD_LAYOUT_PATH=/state/layout.json` for saved
+overview preferences. A nonempty `API_TOKEN` is required to use the editor.
 
 ## Local development and checks
 

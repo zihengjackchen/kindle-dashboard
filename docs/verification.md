@@ -75,3 +75,60 @@ The full suite then passed inside a disposable Linux container on the NAS:
 GNU wget, curl, and Linux ShellCheck were included in that validation container;
 no test tools were installed into the NAS host or production containers.
 The validation container was removed after completion.
+
+## Widget editor and Paperwhite evidence, 2026-10-06
+
+USB diagnostic/log files showed an actual 1072 × 1448 display, successful PNG
+validation and `eips` drawing, and successful Stop Dashboard cleanup. The device
+reported the Freescale i.MX 6SoloLite Wario board label; this does not establish an
+exact retail model or firmware. Firmware detection remained unknown. Three 90%
+battery samples within one minute are insufficient to measure discharge rate.
+No wake, suspend, automatic rotation, or power flags were enabled.
+
+The overview now renders all 12 tickers in a two-column watchlist alongside
+weather, NAS metrics, notes, and Kindle telemetry. The browser editor supports
+widget order/visibility/width/relative size, density, titles, ticker selection,
+notes, draft preview, persistent save, import/export, and dedicated-page previews.
+
+Validation completed:
+
+- Existing Windows full suite: 99 passed, one platform skip. After adding the
+  editor tests, the complete server suite passed: 86 tests, including 20 new
+  checks for auth, persistence/restart, failed atomic saves, invalid/bounded
+  payloads, widget visibility, and preview/contact isolation.
+- Real Chromium-based browser tests: rejected token, connect, reorder/hide,
+  select tickers, edit notes, preview without saving, save, import/export, reload,
+  and mobile width. No browser errors. These run against temporary local state.
+- Rebuilt and deployed on the actual NAS; dashboard and collector healthy.
+  Authenticated live PNG decoded as 8-bit grayscale at 1072 × 1448 with correct
+  response headers. Visually inspected the production-font image.
+- Saved the current default layout to the state volume, restarted the dashboard
+  service, and confirmed preferences survived. Draft previews did not change
+  saved settings; browser previews did not change existing Kindle contact history.
+- Opened the deployed editor in a real browser with the last reported Kindle
+  selected automatically; verified all five widgets and 12 tickers, no JavaScript
+  errors, and no horizontal overflow at mobile width.
+
+The Kindle client files were not changed. The new overview is obtained on its
+next manual refresh. No new physical screen rendering or sleep behavior was
+claimed from the NAS/browser tests. Live sources remain NAS health and BTC/ETH;
+weather and equities require their existing configuration steps.
+
+
+After the location/watchlist update, the complete Windows suite passed **123
+passed, 1 platform skip**, with the existing test-client deprecation warning.
+Additional checks covered Finnhub header authentication, provider timestamps,
+request spacing, expanded symbol validation, ChatGPT summary filtering and stale
+snapshot retention. Browser import/reload also preserves the imported ticker order.
+
+The NAS successfully collected Seattle 98122 weather from Open-Meteo, 24 equity
+quotes from Finnhub, BTC/ETH from Coinbase, NAS metrics, and the PC-exported
+ChatGPT usage snapshot (29 connected source entries). The deployed overview uses
+20 imported stocks/ETFs plus BTC/ETH, three watchlist columns, dual-unit current
+weather, ChatGPT usage, NAS health and Kindle telemetry. The original GOOG/PYPL/
+SOFI/GRAB quotes also remain selectable. There is no S&P 500 entitlement claim.
+
+ChatGPT reads use the documented local app-server usage/limits methods. Only
+filtered metrics reach the NAS; no cookies, login tokens, account IDs or thread
+content are exported. PC synchronization is manual and its two-hour freshness
+window is explicit. No inference requests or scheduled PC tasks were created.

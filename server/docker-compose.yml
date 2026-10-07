@@ -9,6 +9,7 @@ services:
       DASHBOARD_TIMEZONE: "${DASHBOARD_TIMEZONE:-UTC}"
       DASHBOARD_SNAPSHOT_PATH: /data/snapshot.json
       DASHBOARD_STATE_PATH: /state/contacts.json
+      DASHBOARD_LAYOUT_PATH: /state/layout.json
     volumes:
       - ./data:/data:ro
       - contact-state:/state
@@ -34,6 +35,7 @@ services:
     environment:
       DASHBOARD_SNAPSHOT_PATH: /data/snapshot.json
       NAS_SNAPSHOT_PATH: /data/nas.json
+      CHATGPT_SNAPSHOT_PATH: /data/chatgpt.json
     volumes:
       - ./data:/data
     restart: unless-stopped

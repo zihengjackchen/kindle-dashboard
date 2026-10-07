@@ -9,6 +9,7 @@ services:
       DASHBOARD_TIMEZONE: America/Los_Angeles
       DASHBOARD_SNAPSHOT_PATH: /data/snapshot.json
       DASHBOARD_STATE_PATH: /state/contacts.json
+      DASHBOARD_LAYOUT_PATH: /state/layout.json
     volumes:
       - /mnt/POOL/apps/kindle-dashboard/data:/data:ro
       - contact-state:/state
@@ -29,6 +30,9 @@ services:
       DASHBOARD_TIMEZONE: America/Los_Angeles
       DASHBOARD_SNAPSHOT_PATH: /data/snapshot.json
       NAS_SNAPSHOT_PATH: /data/nas.json
+      CHATGPT_SNAPSHOT_PATH: /data/chatgpt.json
+      FINNHUB_API_KEY: ""
+      MARKET_SYMBOLS: ""
       WEATHER_LATITUDE: ""
       WEATHER_LONGITUDE: ""
       WEATHER_LOCATION: ""

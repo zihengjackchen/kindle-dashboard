@@ -6,6 +6,7 @@ from typing import Literal
 from pydantic import AwareDatetime, BaseModel, ConfigDict, Field, model_validator
 
 WATCHLIST = ("S&P 500", "VOO", "VGT", "META", "AMZN", "GOOG", "AMD", "PYPL", "SOFI", "GRAB", "BTC-USD", "ETH-USD")
+SUPPORTED_SYMBOLS = tuple(dict.fromkeys(WATCHLIST + ("AAPL", "TSLA", "GOOGL", "MSFT", "NFLX", "NVDA", "ADBE", "SCHD", "SPY", "DIA", "QQQ", "IWM", "TLT", "GLD", "DBC")))
 
 
 class Record(BaseModel):
@@ -52,7 +53,7 @@ class Quote(Record):
     change: float
     change_percent: float
     currency: Literal["USD"] = "USD"
-    session: Literal["regular", "closed", "premarket", "afterhours", "24h"]
+    session: Literal["regular", "closed", "premarket", "afterhours", "24h", "unknown"]
     basis: Literal["previous close", "24h"]
     delayed: bool = False
 
@@ -68,18 +69,29 @@ class NAS(Record):
     uptime: str = Field(max_length=40)
 
 
+class ChatGPTUsage(Record):
+    lifetime_tokens: int | None = Field(default=None, ge=0)
+    peak_daily_tokens: int | None = Field(default=None, ge=0)
+    current_streak_days: int | None = Field(default=None, ge=0)
+    used_percent: float | None = Field(default=None, ge=0, le=100)
+    window_minutes: int | None = Field(default=None, ge=1)
+    resets_at: AwareDatetime | None = None
+    limit_name: str = Field(default="Account", max_length=40)
+
+
 class Snapshot(BaseModel):
     model_config = ConfigDict(extra="forbid")
     schema_version: Literal[1] = 1
     demo: bool = False
     weather: Weather | None = None
-    quotes: list[Quote] = Field(default_factory=list, max_length=12)
+    quotes: list[Quote] = Field(default_factory=list, max_length=32)
     nas: NAS | None = None
+    chatgpt: ChatGPTUsage | None = None
 
     @model_validator(mode="after")
     def unique_quotes(self):
         symbols = [q.symbol for q in self.quotes]
-        if len(symbols) != len(set(symbols)) or not set(symbols) <= set(WATCHLIST):
+        if len(symbols) != len(set(symbols)) or not set(symbols) <= set(SUPPORTED_SYMBOLS):
             raise ValueError("Duplicate or unknown symbol")
         for q in self.quotes:
             if q.basis != ("24h" if q.symbol in ("BTC-USD", "ETH-USD") else "previous close"):

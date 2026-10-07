@@ -6,16 +6,19 @@ dimensions; Python/Pillow returns a complete grayscale PNG.
 
 **Start with the [installation guide](docs/setup.md).** It generates matching NAS
 and Kindle configuration, including a private USB-installable ZIP and shared token.
-The NAS also offers a browser preview at `/` and authenticated contact/source
+The NAS also offers a [widget layout editor](docs/dashboard-editor.md) at `/` and authenticated contact/source
 diagnostics at `/status`. See the [data contract](docs/product-contract-v1.md)
 for the longer-term portfolio, research and touchscreen roadmap.
 
-**Implemented:** five-page image service, optional NAS-side weather/market/crypto
+**Implemented:** configurable single-page widget overview with all 12 tickers,
+browser preview/save/reorder/resize/import/export, expanded watchlist and optional
+[ChatGPT usage snapshot](docs/chatgpt-usage.md), five-page image service, optional NAS-side weather/market/crypto
 collectors, TrueNAS snapshot exporter, persisted source timestamps, optional
 contact telemetry, battery sampling, offline KUAL carousel, one-shot/batch
 refresh, start/stop, and cached restoration after verified native lockscreen exit.
-**Pending hardware verification:** display,
-KUAL return, and the device-specific wake profile. `WAKE_RESTORE=0` until that
+**Hardware evidence:** one Paperwhite successfully displayed through `eips` at
+1072 × 1448 and completed Stop Dashboard. Other devices still need display/KUAL
+checks. **Pending:** the device-specific wake profile. `WAKE_RESTORE=0` until that
 profile is confirmed. Live sources require your location/provider configuration.
 **Deferred:** touchscreen input, brokerage/analysis integrations, Wi-Fi control,
 scheduled wake and automatic Kindle network refresh.

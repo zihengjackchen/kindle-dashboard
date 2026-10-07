@@ -11,14 +11,14 @@ from threading import Event
 from urllib.parse import urlencode
 from urllib.request import Request, urlopen
 
-from .snapshots import Forecast, NAS, Quote, Snapshot, WATCHLIST, Weather, load_snapshot
+from .snapshots import ChatGPTUsage, Forecast, NAS, Quote, Snapshot, WATCHLIST, SUPPORTED_SYMBOLS, Weather, load_snapshot
 
 LOG = logging.getLogger("collector")
 STOP = Event()
 
 
-def get_json(url):
-    request = Request(url, headers={"User-Agent": "kindle-dashboard/1.0", "Accept": "application/json"})
+def get_json(url, headers=None):
+    request = Request(url, headers={"User-Agent": "kindle-dashboard/1.0", "Accept": "application/json", **(headers or {})})
     with urlopen(request, timeout=15) as response:
         raw = response.read(1024 * 1024 + 1)
     if len(raw) > 1024 * 1024:
@@ -91,6 +91,18 @@ def crypto(symbol, fetch=get_json):
                  session="24h", basis="24h")
 
 
+def finnhub_equity(symbol, env, fetch=get_json):
+    provider_symbol = env.get("FINNHUB_SP500_SYMBOL", "^GSPC") if symbol == "S&P 500" else symbol
+    data = fetch("https://finnhub.io/api/v1/quote?" + urlencode({"symbol": provider_symbol}),
+                 headers={"X-Finnhub-Token": env["FINNHUB_API_KEY"]})
+    if data.get("error") or not data.get("t") or not data.get("c"):
+        raise ValueError("Finnhub quote unavailable")
+    as_of = datetime.fromtimestamp(int(data["t"]), timezone.utc)
+    return Quote(source="Finnhub", symbol=symbol, price=data["c"], change=data["d"],
+                 change_percent=data["dp"], as_of=as_of, valid_until=as_of+timedelta(hours=2),
+                 session="unknown", basis="previous close", delayed=env.get("MARKET_DATA_DELAYED", "1") != "0")
+
+
 def save_snapshot(path, snapshot):
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -117,10 +129,13 @@ def collect_once(env=None, fetch=get_json, wait=STOP.wait):
             errors.append("weather")
             LOG.warning("Weather fetch failed; retaining previous observation")
     quotes = {q.symbol: q for q in previous.quotes}
-    if env.get("TWELVE_DATA_API_KEY"):
-        for index, symbol in enumerate(WATCHLIST[:10]):
-            if index and wait(8): break  # stay below eight requests/minute; no rapid retries
-            try: quotes[symbol] = equity(symbol, env, fetch)
+    if env.get("FINNHUB_API_KEY") or env.get("TWELVE_DATA_API_KEY"):
+        requested = (env.get("MARKET_SYMBOLS") or ",".join(WATCHLIST[:10])).split(",")
+        symbols = list(dict.fromkeys(s.strip() for s in requested if s.strip() in SUPPORTED_SYMBOLS and s.strip() not in WATCHLIST[10:]))
+        use_finnhub = bool(env.get("FINNHUB_API_KEY"))
+        for index, symbol in enumerate(symbols):
+            if index and wait(2 if use_finnhub else 8): break
+            try: quotes[symbol] = (finnhub_equity if use_finnhub else equity)(symbol, env, fetch)
             except Exception:
                 errors.append(symbol)
                 LOG.warning("Quote unavailable for %s; retaining previous observation", symbol)
@@ -140,6 +155,15 @@ def collect_once(env=None, fetch=get_json, wait=STOP.wait):
             errors.append("nas")
             LOG.warning("NAS export unavailable; retaining previous observation")
     result["quotes"] = list(quotes.values())
+    usage_path = env.get("CHATGPT_SNAPSHOT_PATH", "")
+    if usage_path:
+        try:
+            with Path(usage_path).open("rb") as stream: raw = stream.read(16385)
+            if len(raw) > 16384: raise ValueError("Usage snapshot too large")
+            result["chatgpt"] = ChatGPTUsage.model_validate_json(raw)
+        except Exception:
+            errors.append("chatgpt")
+            LOG.warning("ChatGPT usage snapshot unavailable; retaining previous observation")
     save_snapshot(path, Snapshot.model_validate(result))
     LOG.info("Collection complete; unavailable sources=%d", len(errors))
     return errors

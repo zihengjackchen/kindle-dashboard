@@ -26,5 +26,11 @@ for page in PAGE_IDS:
     (example_dir / f"{page}.png").write_bytes(png)
     if page == "overview":
         (ROOT / "docs" / "example-dashboard.png").write_bytes(png)
+(example_dir / "overview-1072x1448.png").write_bytes(render_dashboard(
+    DashboardRequest(width=1072, height=1448, battery=73, charging=False, device="paperwhite"),
+    Settings(timezone="America/Los_Angeles"),
+    datetime(2026, 10, 1, 9, 41, tzinfo=ZoneInfo("America/Los_Angeles")),
+    snapshot=fixture,
+))
 (example_dir / "sample-snapshot.json").write_text(fixture.model_dump_json(indent=2), encoding="utf-8")
 print(example_dir)

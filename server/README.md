@@ -1,5 +1,7 @@
 # PNG service
 
+The current editor supports all five pages, drag-and-drop widget ordering, field selection, refresh settings and rendered previews. The TrueNAS host exporter includes B2 Cloud Sync summaries and bounded system metrics. ChatGPT usage is removed. See [Kindle app](../docs/kindle-app.md).
+
 Routes are `GET /health`, `GET /dashboard.png`, authenticated `GET /status`,
 `GET /layout`, `PUT /layout`, `POST /preview.png`, and the dashboard studio at `GET /`.
 See [the editor guide](../docs/dashboard-editor.md) for layout controls and API details.

@@ -132,3 +132,24 @@ ChatGPT reads use the documented local app-server usage/limits methods. Only
 filtered metrics reach the NAS; no cookies, login tokens, account IDs or thread
 content are exported. PC synchronization is manual and its two-hour freshness
 window is explicit. No inference requests or scheduled PC tasks were created.
+
+
+## Library app and editor update ? October 7, 2026
+
+133 automated tests passed, one platform-dependent test skipped in the full run.
+Additional backup sanitization and power recovery cases cover the new host/app
+paths. Real Edge browser checks cover drag/drop, per-page saving, field toggles,
+preview, and app navigation, decode acknowledgement, timers, pause/resume, Close.
+ShellCheck passes for shell scripts and CGI. Existing manual-shell tests retain
+real HTTP failure, lock, stale-cache and kill-switch coverage.
+
+The NAS service and collector were rebuilt/deployed and checked through HTTP.
+The new NAS snapshot reports the real B2 Cloud Sync job and selectable host metrics.
+A rollback image is tagged `kindle-dashboard:before-app-editor`.
+
+Physical Kindle not connected during this update. New app manifest/API behavior,
+BusyBox httpd availability, native Close, exact waveform/full-refresh behavior,
+true light-off, resume and overnight plugged-in behavior have NOT been verified.
+`KEEP_AWAKE_PLUGGED=0`; no raw suspend or scheduled wake behavior is enabled.
+Earlier statements above about ChatGPT snapshots describe the prior release;
+that collector/exporter/widget has now been removed.

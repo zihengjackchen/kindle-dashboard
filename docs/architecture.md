@@ -1,5 +1,7 @@
 # Architecture and scope
 
+> Library app update: see [Kindle app](kindle-app.md) and [editor](dashboard-editor.md). The manual KUAL workflow below remains a fallback; its restrictions do not describe the new app timers and touch controls.
+
 This describes the implemented shell-client MVP. See the
 [v1 roadmap](product-contract-v1.md) for longer-term requirements. Five pages,
 source collectors, persistent snapshots, contact telemetry and a KUAL carousel

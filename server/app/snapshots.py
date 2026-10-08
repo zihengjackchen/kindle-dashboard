@@ -58,6 +58,19 @@ class Quote(Record):
     delayed: bool = False
 
 
+class Backup(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    name: str = Field(max_length=80)
+    enabled: bool = True
+    state: str = Field(default="UNKNOWN", max_length=24)
+    last_run: AwareDatetime | None = None
+    last_success: AwareDatetime | None = None
+    duration_seconds: int | None = Field(default=None, ge=0)
+    percent: float | None = Field(default=None, ge=0, le=100)
+    schedule: str = Field(default="Unknown", max_length=80)
+    transfer: str = Field(default="", max_length=180)
+
+
 class NAS(Record):
     name: str = Field(max_length=40)
     version: str = Field(max_length=40)
@@ -67,16 +80,8 @@ class NAS(Record):
     memory_percent: float | None = Field(default=None, ge=0, le=100)
     alerts: int = Field(ge=0, le=10000)
     uptime: str = Field(max_length=40)
-
-
-class ChatGPTUsage(Record):
-    lifetime_tokens: int | None = Field(default=None, ge=0)
-    peak_daily_tokens: int | None = Field(default=None, ge=0)
-    current_streak_days: int | None = Field(default=None, ge=0)
-    used_percent: float | None = Field(default=None, ge=0, le=100)
-    window_minutes: int | None = Field(default=None, ge=1)
-    resets_at: AwareDatetime | None = None
-    limit_name: str = Field(default="Account", max_length=40)
+    metrics: dict[str, float | int | str | None] = Field(default_factory=dict, max_length=40)
+    backups: list[Backup] = Field(default_factory=list, max_length=8)
 
 
 class Snapshot(BaseModel):
@@ -86,7 +91,13 @@ class Snapshot(BaseModel):
     weather: Weather | None = None
     quotes: list[Quote] = Field(default_factory=list, max_length=32)
     nas: NAS | None = None
-    chatgpt: ChatGPTUsage | None = None
+    @model_validator(mode="before")
+    @classmethod
+    def discard_legacy_usage(cls, value):
+        if isinstance(value, dict):
+            value = dict(value)
+            value.pop("chatgpt", None)
+        return value
 
     @model_validator(mode="after")
     def unique_quotes(self):

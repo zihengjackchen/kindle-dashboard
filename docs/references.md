@@ -22,3 +22,15 @@ does not prove that the same version/build exists on the target Kindle.
 eips `-f -g IMAGE` is a common Kindle image-display convention. Support and
 reported geometry formats must be checked on your device. No eips power or
 lockscreen command is used here.
+
+
+### Native app and frontlight references
+
+- https://github.com/crizmo/KWordle/blob/main/kwordle.sh ? app registration pattern.
+- https://github.com/crizmo/KWordle/blob/main/kwordle/index.html ? system Close control.
+- https://github.com/penguins184/Penguins-Kindle-Wiki/blob/main/Illusion-Guide.md ? Mesquite manifests and ES5 constraints.
+- https://github.com/koreader/koreader/blob/master/frontend/device/kindle/powerd.lua ? native brightness zero differs from true light-off on older Paperwhites.
+
+The dashboard implementation is original; no Wordle source/assets or KOReader
+runtime is bundled. References establish API patterns, not proof of compatibility
+with an untested device.

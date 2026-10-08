@@ -11,7 +11,7 @@ from threading import Event
 from urllib.parse import urlencode
 from urllib.request import Request, urlopen
 
-from .snapshots import ChatGPTUsage, Forecast, NAS, Quote, Snapshot, WATCHLIST, SUPPORTED_SYMBOLS, Weather, load_snapshot
+from .snapshots import Forecast, NAS, Quote, Snapshot, WATCHLIST, SUPPORTED_SYMBOLS, Weather, load_snapshot
 
 LOG = logging.getLogger("collector")
 STOP = Event()
@@ -155,15 +155,6 @@ def collect_once(env=None, fetch=get_json, wait=STOP.wait):
             errors.append("nas")
             LOG.warning("NAS export unavailable; retaining previous observation")
     result["quotes"] = list(quotes.values())
-    usage_path = env.get("CHATGPT_SNAPSHOT_PATH", "")
-    if usage_path:
-        try:
-            with Path(usage_path).open("rb") as stream: raw = stream.read(16385)
-            if len(raw) > 16384: raise ValueError("Usage snapshot too large")
-            result["chatgpt"] = ChatGPTUsage.model_validate_json(raw)
-        except Exception:
-            errors.append("chatgpt")
-            LOG.warning("ChatGPT usage snapshot unavailable; retaining previous observation")
     save_snapshot(path, Snapshot.model_validate(result))
     LOG.info("Collection complete; unavailable sources=%d", len(errors))
     return errors

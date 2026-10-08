@@ -94,26 +94,15 @@ def test_finnhub_header_auth_timestamp_and_failure():
         finnhub_equity("AAPL", {"FINNHUB_API_KEY": "private-test"}, lambda *a, **k: {"c": 0, "t": 0})
 
 
-def test_extended_watchlist_spacing_and_usage_retention(tmp_path):
-    from datetime import timedelta
-    from app.snapshots import ChatGPTUsage
-    from app.collect import finnhub_equity
-    now = datetime.now(timezone.utc)
-    usage = ChatGPTUsage(source="OpenAI / PC sync", as_of=now, valid_until=now+timedelta(hours=2), lifetime_tokens=123)
-    usage_path = tmp_path/"chatgpt.json"
-    usage_path.write_text(usage.model_dump_json())
+def test_extended_watchlist_spacing(tmp_path):
     snapshot_path = tmp_path/"snapshot.json"
     waits = []
     def fetch(url, headers):
         if "SPY" in url: raise OSError("secret must not be logged")
         return {"c": 200, "d": 2, "dp": 1.01, "t": 1700000000}
     env = {"FINNHUB_API_KEY": "private", "MARKET_SYMBOLS": "AAPL,AAPL,MSFT,SPY,UNKNOWN,BTC-USD",
-           "DASHBOARD_SNAPSHOT_PATH": str(snapshot_path), "CHATGPT_SNAPSHOT_PATH": str(usage_path)}
+           "DASHBOARD_SNAPSHOT_PATH": str(snapshot_path)}
     errors = collect_once(env, fetch, waits.append)
     snapshot = load_snapshot(str(snapshot_path))
     assert [q.symbol for q in snapshot.quotes] == ["AAPL", "MSFT"]
     assert waits == [2, 2] and errors == ["SPY"]
-    assert snapshot.chatgpt == usage
-    usage_path.write_text("invalid")
-    collect_once(env, fetch, lambda _: False)
-    assert load_snapshot(str(snapshot_path)).chatgpt == usage

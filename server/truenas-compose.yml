@@ -30,7 +30,6 @@ services:
       DASHBOARD_TIMEZONE: America/Los_Angeles
       DASHBOARD_SNAPSHOT_PATH: /data/snapshot.json
       NAS_SNAPSHOT_PATH: /data/nas.json
-      CHATGPT_SNAPSHOT_PATH: /data/chatgpt.json
       FINNHUB_API_KEY: ""
       MARKET_SYMBOLS: ""
       WEATHER_LATITUDE: ""

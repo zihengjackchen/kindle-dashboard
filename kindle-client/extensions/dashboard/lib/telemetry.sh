@@ -14,6 +14,13 @@ append_telemetry() {
     REQUEST_URL="$REQUEST_URL&device_id=$(safe_label "$DEVICE_ID")"
     rssi=$(read_rssi) || rssi=
     [ -z "$rssi" ] || REQUEST_URL="$REQUEST_URL&rssi=$rssi"
+    REQUEST_URL="$REQUEST_URL&firmware=$(safe_label "$FIRMWARE")"
+    up=$(cut -d. -f1 /proc/uptime 2>/dev/null)
+    is_uint "$up" && REQUEST_URL="$REQUEST_URL&uptime_seconds=$up"
+    free_mib=$(df -k "$DASHBOARD_DIR" 2>/dev/null | awk 'NR==2 {print int($4/1024)}')
+    is_uint "$free_mib" && REQUEST_URL="$REQUEST_URL&storage_free_mib=$free_mib"
+    light=$(probe lipc-get-prop com.lab126.powerd flIntensity)
+    if is_uint "$light" && [ "$light" -le 100 ]; then REQUEST_URL="$REQUEST_URL&frontlight=$light"; fi
     for field in fetch_seconds fetch_failures last_success_epoch; do
         value=$(read_first "$STATE_DIR/$field")
         # Epoch values require more digits than ordinary config integers.

@@ -13,7 +13,7 @@ from .models import DashboardRequest
 from .renderer import render_dashboard
 from .snapshots import SUPPORTED_SYMBOLS, load_snapshot
 from .telemetry import ContactStore
-from .layout import Layout, LayoutStore
+from .layout import Layout, LayoutStore, FIELDS, DEFAULT_FIELDS, PAGE_IDS
 
 logger = logging.getLogger("dashboard")
 
@@ -63,8 +63,19 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     @app.get("/layout", dependencies=[Depends(editor_auth)])
     def get_layout(response: Response):
         response.headers["Cache-Control"] = "no-store"
-        return {"layout": layouts.get(), "defaults": Layout(), "tickers": SUPPORTED_SYMBOLS,
+        value = layouts.get()
+        return {"layout": value, "defaults": Layout(), "tickers": SUPPORTED_SYMBOLS,
+                "fields": FIELDS, "default_fields": DEFAULT_FIELDS,
+                "page_defaults": {page: Layout().for_page(page) for page in PAGE_IDS if page != "overview"},
                 "can_save": bool(settings.layout_path)}
+
+    @app.get("/client-config.json", dependencies=[Depends(authenticate)])
+    def client_config(response: Response):
+        response.headers["Cache-Control"] = "no-store"
+        value = layouts.get()
+        return {"pages": [{"id": p, "name": value.for_page(p).title} for p in value.page_order],
+                "refresh_minutes": value.refresh_minutes, "night_minutes": value.night_minutes,
+                "rotation_minutes": value.rotation_minutes}
 
     @app.put("/layout", dependencies=[Depends(editor_auth)])
     async def save_layout(request: Request):
@@ -92,9 +103,10 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         response.headers["Cache-Control"] = "no-store"
         now = datetime.now(timezone.utc)
         snapshot = load_snapshot(settings.snapshot_path)
-        records = {"weather": snapshot.weather, "nas": snapshot.nas, "chatgpt": snapshot.chatgpt}
+        records = {"weather": snapshot.weather, "nas": snapshot.nas}
         records.update({quote.symbol: quote for quote in snapshot.quotes})
         return {"service": "ok", "server_time": now.isoformat(), "devices": contacts.snapshot(),
+                "nas": snapshot.nas,
                 "sources": {key: {"status": value.status(now), "as_of": value.as_of.isoformat(),
                                   "valid_until": value.valid_until.isoformat()} if value else None
                             for key, value in records.items()}}
@@ -103,6 +115,11 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     def preview():
         return Response(Path(__file__).with_name("preview.html").read_text(encoding="utf-8"),
                         media_type="text/html", headers={"Cache-Control": "no-store"})
+
+    @app.get("/editor.js", include_in_schema=False)
+    def editor_script():
+        return Response(Path(__file__).with_name("editor.js").read_text(encoding="utf-8"),
+                        media_type="application/javascript", headers={"Cache-Control": "no-store"})
 
     return app
 

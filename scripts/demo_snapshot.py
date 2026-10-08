@@ -17,5 +17,7 @@ def demo_snapshot():
                      session="24h" if index >= 10 else "regular", basis="24h" if index >= 10 else "previous close")
                 for index, (symbol, price, pct) in enumerate(zip(WATCHLIST, prices, changes))],
         nas=dict(**shared, name="Home NAS · sample", version="TrueNAS / example metrics", pool_health="ONLINE",
-                 used_percent=62, cpu_percent=14, memory_percent=47, alerts=0, uptime="18 days"),
+                 used_percent=62, cpu_percent=14, memory_percent=47, alerts=0, uptime="18 days",
+                 metrics={"memory_available_gib":8.5}, backups=[dict(name="Example backup",enabled=True,state="SUCCESS",
+                 last_run="2026-10-01T07:00:00Z",last_success="2026-10-01T07:01:00Z",duration_seconds=60,percent=100,schedule="Sun 00:00")]),
     ))

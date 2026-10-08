@@ -58,6 +58,8 @@ def main():
                 assert page.locator("#widgets .widget").count() == 5
                 assert page.locator("#tickers input:checked").count() == 12
                 page.locator("#title").fill("My quiet morning")
+                page.locator("#add-widget").select_option("notes")
+                page.locator("#add").click()
                 page.locator("#notes").fill("Coffee at 8:00\nReview the week")
                 page.get_by_role("button", name="Hide Home server", exact=True).click()
                 page.get_by_role("button", name="Move Watchlist up", exact=True).click()
@@ -99,6 +101,22 @@ def main():
                 page.set_viewport_size({"width": 390, "height": 844})
                 assert page.evaluate("document.documentElement.scrollWidth <= innerWidth")
                 page.screenshot(path=str(out/"mobile.png"), full_page=True)
+                page.set_viewport_size({"width":1440,"height":1000})
+                page.locator("#token").fill("local-editor-test")
+                page.locator("#widgets .widget").first.drag_to(page.locator("#widgets .widget").last)
+                page.wait_for_function("!document.querySelector('#save').disabled")
+                page.locator("#page").select_option("nas")
+                page.wait_for_function("document.querySelector('#title').value==='Home server'")
+                page.wait_for_function("!document.querySelector('#save').disabled")
+                page.locator(".widget[data-id=nas] summary").click()
+                page.locator("input[data-field=uptime]").check()
+                page.locator("#title").fill("Server details")
+                page.locator("#save").click()
+                page.wait_for_function("document.querySelector('#draft-state').textContent==='Saved layout preview'")
+                saved=json.loads((Path(temp)/"layout.json").read_text())
+                assert saved['pages']['nas']['title']=='Server details'
+                assert 'uptime' in saved['pages']['nas']['widgets'][0]['fields']
+                assert saved['title']=='My quiet morning'
                 assert not errors, errors
                 browser.close()
                 print("Editor browser checks passed: auth, reorder/hide, tickers, preview, save, export/import, reload, mobile.")

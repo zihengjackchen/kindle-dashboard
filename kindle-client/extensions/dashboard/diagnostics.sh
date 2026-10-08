@@ -19,7 +19,7 @@ diagnostic_report() {
     cat /etc/os-release 2>/dev/null
     free 2>/dev/null
     df -h
-    for cmd in eips fbink curl wget lipc-get-prop lipc-set-prop gasgauge-info timeout fbset pngcheck powerd lipc-probe lipc-wait-event mkfifo; do
+    for cmd in eips fbink curl wget lipc-get-prop lipc-set-prop gasgauge-info timeout fbset pngcheck powerd lipc-probe lipc-wait-event mkfifo sqlite3 mesquite busybox cksum; do
         printf '\n--- which %s ---\n' "$cmd"
         which "$cmd" 2>/dev/null || command -v "$cmd" || :
     done
@@ -37,13 +37,20 @@ diagnostic_report() {
         probe find /sys/devices -maxdepth 8 -type f \( -name capacity -o -name battery_capacity -o -name charging -o -name status \) | head -n 100
         printf '\n--- Read-only power capabilities ---\n'
         cat /sys/power/state 2>/dev/null
-        for prop in battLevel isCharging state; do
+        for prop in battLevel isCharging state flIntensity isUsbConnected preventScreenSaver; do
             printf 'powerd.%s: ' "$prop"; probe lipc-get-prop com.lab126.powerd "$prop"; printf '\n'
         done
         printf 'cmd.wirelessEnable: '; probe lipc-get-prop com.lab126.cmd wirelessEnable
         if command -v lipc-probe >/dev/null 2>&1 && command -v timeout >/dev/null 2>&1; then
             probe lipc-probe -a com.lab126.powerd | head -n 160
         fi
+        printf '\n--- App capabilities ---\n'
+        probe lipc-get-prop com.lab126.appmgrd activeApp
+        busybox httpd --help 2>&1 | head -n 20
+        for light in /sys/class/backlight/*/brightness; do
+            [ -r "$light" ] || continue
+            printf '%s: ' "$light"; head -c 64 "$light"; printf '\n'
+        done
         printf '\n--- Framebuffer metadata ---\n'
         for attr in name modes virtual_size bits_per_pixel rotate; do
             printf '%s: ' "$attr"; head -c 512 "/sys/class/graphics/fb0/$attr" 2>/dev/null; printf '\n'

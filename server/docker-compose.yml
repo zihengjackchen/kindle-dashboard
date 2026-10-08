@@ -35,7 +35,6 @@ services:
     environment:
       DASHBOARD_SNAPSHOT_PATH: /data/snapshot.json
       NAS_SNAPSHOT_PATH: /data/nas.json
-      CHATGPT_SNAPSHOT_PATH: /data/chatgpt.json
     volumes:
       - ./data:/data
     restart: unless-stopped

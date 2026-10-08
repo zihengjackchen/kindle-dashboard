@@ -1,0 +1,11 @@
+<?xml version="1.0"?>
+<widget id="org.kindledashboard.app" version="2.0" viewmodes="application" xmlns="http://www.w3.org/ns/widgets" xmlns:kindle="http://kindle.amazon.com/ns/widget-extensions">
+ <name xml:lang="en">Dashboard</name><content src="index.html"/>
+ <kindle:permissions><kindle:permission name="local-port-access"/></kindle:permissions>
+ <kindle:network><kindle:asset key="overrideProxy" value="none"/><kindle:asset key="enableCaching" value="false"/></kindle:network>
+ <kindle:chrome><kindle:asset key="configureSearchBar" value="system"/></kindle:chrome>
+ <kindle:gestures><kindle:param name="tap" value="yes" properties="fire_on_tap:1 max_updown_delta:0"/></kindle:gestures>
+ <feature name="http://kindle.amazon.com/apis" required="true"><param name="appmgr" value="yes"/><param name="messaging" value="yes"/></feature>
+ <kindle:messaging><kindle:app name="com.lab126.chromebar" value="yes"/></kindle:messaging>
+ <kindle:settings><kindle:setting name="internetRequired" value="no"/><kindle:setting name="saveContext" value="no"/></kindle:settings>
+</widget>

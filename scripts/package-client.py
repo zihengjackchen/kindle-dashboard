@@ -15,10 +15,11 @@ destination.parent.mkdir(parents=True, exist_ok=True)
 with ZipFile(destination, "w", ZIP_DEFLATED) as archive:
     files = sorted(p for p in extension.glob("*.sh") if p.name != "config.local.sh") + [extension / "config.xml", extension / "menu.json"]
     files += sorted((extension / "lib").glob("*.sh")) + sorted((extension / "lib").glob("*.awk"))
+    files += sorted((extension / "app").glob("*")) + sorted((source / "documents").glob("*.sh"))
     for path in files:
         entry = ZipInfo(path.relative_to(source).as_posix())
         entry.create_system = 3
-        entry.external_attr = (0o100755 if path.suffix == ".sh" else 0o100644) << 16
+        entry.external_attr = (0o100755 if path.suffix in (".sh", ".cgi") else 0o100644) << 16
         entry.compress_type = ZIP_DEFLATED
         archive.writestr(entry, path.read_bytes().replace(b"\r\n", b"\n"))
     for folder in ("cache", "state", "logs"):

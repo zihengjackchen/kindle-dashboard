@@ -10,6 +10,7 @@ init_client() {
     # Optional private setup generated on your computer, excluded from Git.
     # shellcheck disable=SC1091
     [ ! -f "$DASHBOARD_DIR/config.local.sh" ] || . "$DASHBOARD_DIR/config.local.sh"
+    is_uint "$APP_PORT" && [ "$APP_PORT" -ge 1024 ] && [ "$APP_PORT" -le 65535 ] || return 1
     DATA_DIR=$DASHBOARD_DIR
     if [ "$MOCK_MODE" = 1 ]; then DATA_DIR=${DASHBOARD_DATA_DIR:-$DASHBOARD_DIR}; fi
     CACHE_DIR=$DATA_DIR/cache

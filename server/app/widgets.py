@@ -25,7 +25,7 @@ class Card:
         self.scale = min(canvas.scale, self.w / 480, self.h / {"small": 220, "medium": 340, "large": 600}[size])
         self.type_scale = 1 if density == "compact" else 1.12
         canvas.draw.rounded_rectangle((self.x, self.y, self.x+self.w, self.y+self.h),
-                                      radius=max(3, int(22 * canvas.scale)), fill=246, outline=185, width=1)
+                                      radius=max(3, int(22 * canvas.scale)), fill=250, outline=0, width=1)
 
     def text(self, value, x, y, size=28, bold=False, shade=0, right=False, width=.92):
         value = str(value)
@@ -42,151 +42,149 @@ class Card:
         self.c.draw.line((self.x+self.pad, yy, self.x+self.w-self.pad, yy), fill=205)
 
 
-def record_time(record, now):
-    return (f"{record.status(now)} · {record.as_of.astimezone(now.tzinfo):%m/%d %H:%M %Z}"
-            if record else "NOT CONNECTED")
-
-
 def temperatures(value, unit):
     c = value if unit == "C" else (value-32)*5/9
     return f"{c:.0f}°C / {c*9/5+32:.0f}°F"
 
 
-def draw_weather(card, snap, now, units):
+def selected(widget):
+    from .layout import DEFAULT_FIELDS
+    return DEFAULT_FIELDS[widget.id] if widget.fields is None else widget.fields
+
+
+def lines(card, title, values):
+    card.text(title, 0, 0, 23, True)
+    step = .80/max(3, len(values))
+    for i, (label, value) in enumerate(values):
+        y = .16 + i*step
+        size = min(29, 145/max(5, len(values)))
+        card.text(label, 0, y, size, shade=65, width=.48)
+        card.text(value, 1, y, size, True, right=True, width=.49)
+
+
+def show(value, suffix=""):
+    if value is None: return "—"
+    if isinstance(value, float): return f"{value:.1f}{suffix}"
+    return f"{value}{suffix}"
+
+
+def draw_weather(card, snap, now, units, fields):
     w = snap.weather
     card.text("WEATHER", 0, 0, 23, True)
-    card.text(w.location if w else "Set location on NAS", 0, .105, 24, shade=65)
-    both = units == "both"
-    card.text((temperatures(w.temperature, w.unit) if both else f"{w.temperature:.0f}°{w.unit}") if w else "—°", 0, .23, 49 if both else 76, True)
-    card.text(w.condition if w else "No weather data", 0, .47, 27, True)
-    card.text((f"H {temperatures(w.high,w.unit)} · L {temperatures(w.low,w.unit)}" if both else f"High {w.high:.0f}° / Low {w.low:.0f}°") if w else "Forecast will appear here", 0, .59, 21)
-    forecast = "   ".join(f"{d.day[:3]} {d.high:.0f}°/{d.low:.0f}°" for d in w.forecast[:3]) if w else "Location and units configured on NAS"
-    card.text(f"Rain {w.precipitation_percent}% · {forecast} ({w.unit})" if w else forecast, 0, .72, 18, shade=55)
-    card.rule(.83)
-    card.text(record_time(w, now), 0, .89, 18, shade=65)
+    if not w:
+        card.text("Weather unavailable", 0, .28, 30, True)
+        return
+    temp = lambda v: temperatures(v, w.unit) if units == "both" else f"{v:.0f}°{w.unit}"
+    values = {"location":w.location,"temperature":temp(w.temperature),"condition":w.condition,
+              "high_low":f"H {temp(w.high)}  L {temp(w.low)}",
+              "feels_like":f"Feels like {temp(w.feels_like)}" if w.feels_like is not None else "Feels like —",
+              "precipitation":f"Rain {w.precipitation_percent}%",
+              "forecast":"   ".join(f"{d.day[:3]} {temp(d.high)}" for d in w.forecast[:2])}
+    y = .13
+    # Give the temperature more room; field toggles reclaim the remaining space.
+    weight = len(fields)+1.2*int("temperature" in fields)
+    for key in fields:
+        card.text(values[key], 0, y, 48 if key == "temperature" else 24,
+                  key in ("temperature", "condition"), width=1)
+        y += .79/max(1,weight)*(2.2 if key == "temperature" else 1)
 
 
-def draw_nas(card, snap, now):
-    n = snap.nas
-    card.text("HOME SERVER", 0, 0, 23, True)
-    card.text(n.name if n else "NAS health", 0, .105, 24, shade=65)
-    card.text(n.pool_health if n else "NO DATA", 0, .255, 40, True)
-    for i, (label, value) in enumerate((("Storage", n.used_percent if n else None), ("CPU", n.cpu_percent if n else None), ("Memory", n.memory_percent if n else None))):
-        y = .44 + i*.12
-        card.text(label, 0, y, 24)
-        card.text(f"{value:.0f}%" if value is not None else "—", 1, y, 24, True, right=True, width=.25)
-        left = card.x+card.pad+(card.w-2*card.pad)*.43
-        top = card.y+card.pad+y*(card.h-2*card.pad)+5*card.scale
-        length = (card.w-2*card.pad)*.29
-        card.c.draw.rectangle((left, top, left+length, top+8*card.scale), fill=215)
-        if value:
-            card.c.draw.rectangle((left, top, left+length*value/100, top+8*card.scale), fill=20)
-    card.text(f"{n.alerts} alerts · Up {n.uptime}" if n else "Host metrics unavailable", 0, .80, 21)
-    card.text(record_time(n, now), 0, .92, 18, shade=65)
-
-
-def draw_markets(card, snap, now, tickers, market_columns):
+def draw_markets(card, snap, now, tickers, market_columns, fields):
     card.text("WATCHLIST", 0, 0, 23, True)
-    card.text("USD · equities: prev close / crypto: 24h", 1, .005, 18, right=True, width=.65)
-    quotes = {q.symbol: q for q in snap.quotes}
+    quotes = {q.symbol:q for q in snap.quotes}
     columns = market_columns if card.w > card.c.width*.65 else 1
     count = ceil(len(tickers)/columns)
-    step = .83/count
-    # Larger watchlists need smaller rows, without reducing other widgets' text.
-    dense = count > 6
-    factor = min(1, 9/count) if dense else 1
+    step = .87/count
+    factor = min(1, 10/count)
     for i, symbol in enumerate(tickers):
-        col, row = divmod(i, count)
-        width = (1-.04*(columns-1))/columns
-        x = col*(width+.04)
-        y = .10 + row*step
+        col,row = divmod(i,count)
+        width = (1-.045*(columns-1))/columns
+        x,y = col*(width+.045), .10+row*step
         q = quotes.get(symbol)
-        card.text(symbol, x, y, 30*factor, True, width=width*.50)
-        card.text(f"{q.price:,.2f}" if q else "—", x+width, y, 29*factor, True, right=True, width=width*.48)
-        if dense:
-            card.text(f"{q.change_percent:+.2f}%" if q else "NO DATA", x, y+step*.52, 21*factor, width=width*.27)
-            detail = (f"{q.status(now)}{' D' if q.delayed else ''} · {q.as_of.astimezone(now.tzinfo):%m/%d %H:%M}" if q else "Not connected")
-            card.text(detail, x+width, y+step*.55, 16*factor, shade=65, right=True, width=width*.70)
-        else:
-            card.text(f"{q.change:+,.2f}" if q else "Not connected", x, y+step*.32, 23*factor, width=width*.55)
-            card.text(f"{q.change_percent:+.2f}%" if q else "NO DATA", x+width, y+step*.32, 23*factor, right=True, width=width*.42)
-            detail = record_time(q, now) + (" · DELAYED" if q and q.delayed else "")
-            card.text(detail, x, y+step*.64, 17*factor, shade=65, width=width)
-    sources = sorted({q.source for q in snap.quotes if q.symbol in tickers})
-    card.text("Sources: " + (", ".join(sources) if sources else "not connected") + (" · D = delayed" if dense else ""), 0, .965, 17, shade=65)
+        card.text(symbol, x, y, 31*factor, True, width=width*.50)
+        if "price" in fields:
+            card.text(f"{q.price:,.2f}" if q else "—", x+width, y, 30*factor, True, right=True, width=width*.49)
+        if "change" in fields:
+            card.text(f"{q.change:+,.2f}" if q else "—", x, y+step*.44, 24*factor, width=width*.49)
+        if "percent" in fields:
+            card.text(f"{q.change_percent:+.2f}%" if q else "—", x+width, y+step*.44, 24*factor, right=True, width=width*.49)
+        if row < count-1:
+            yy = card.y+card.pad+(y+step*.85)*(card.h-2*card.pad)
+            left=card.x+card.pad+x*(card.w-2*card.pad)
+            card.c.draw.line((left,yy,left+width*(card.w-2*card.pad),yy),fill=210)
 
 
-def draw_chatgpt(card, snapshot, now):
-    usage = snapshot.chatgpt
-    card.text("CHATGPT USAGE", 0, 0, 23, True)
-    if usage is None:
-        card.text("Not connected", 0, .25, 29, True)
-        card.text("Sync from your signed-in PC", 0, .52, 22)
-        card.text("No account data on this NAS", 0, .88, 18, shade=65)
-        return
-    def compact(number):
-        if number is None: return "—"
-        if number >= 1e9: return f"{number/1e9:.1f}B"
-        if number >= 1e6: return f"{number/1e6:.1f}M"
-        if number >= 1e3: return f"{number/1e3:.0f}K"
-        return str(number)
-    card.text(f"{compact(usage.lifetime_tokens)} lifetime tokens", 0, .21, 29, True)
-    card.text(f"Peak {compact(usage.peak_daily_tokens)}/day · Streak {usage.current_streak_days if usage.current_streak_days is not None else '—'}d", 0, .43, 22)
-    limits = f"{usage.limit_name}: {usage.used_percent:.0f}% used" if usage.used_percent is not None else "Usage limits not reported"
-    card.text(limits, 0, .63, 22)
-    reset = f"Reset {usage.resets_at.astimezone(now.tzinfo):%m/%d %H:%M %Z}" if usage.resets_at else "PC sync; not live"
-    card.text(reset, 0, .80, 17, shade=65)
-    card.text(record_time(usage, now), 0, .94, 16, shade=65)
+def draw_nas(card, snap, now, fields):
+    n = snap.nas
+    labels={"pool_health":"Pool", "used_percent":"Storage used", "cpu_percent":"CPU", "memory_percent":"Memory used", "alerts":"Alerts", "uptime":"Uptime", "version":"TrueNAS"}
+    metric_labels={"memory_available_gib":"RAM available","memory_total_gib":"RAM total","pool_free_gib":"Pool free","pool_size_gib":"Pool size","cpu_temperature_c":"CPU temperature"}
+    values=[]
+    for key in fields:
+        value=getattr(n,key,None) if n and key in labels else n.metrics.get(key) if n else None
+        suffix="%" if key.endswith("percent") else " GiB" if key.endswith("gib") else " Mb/s" if key.endswith("mbps") else " °C" if key.endswith("temperature_c") else ""
+        values.append((labels.get(key,metric_labels.get(key,key.replace("_"," ").capitalize())),show(value,suffix)))
+    lines(card,"HOME SERVER",values)
 
 
-def draw_notes(card, layout):
-    card.text(layout.notes_title.upper(), 0, 0, 23, True)
-    lines = layout.notes or ["Make room for your day.", "Add notes in the web editor."]
-    step = .71/max(3, len(lines))
-    for i, line in enumerate(lines):
-        card.text("· " + line, 0, .22+i*step, 24, width=1)
-    card.text("MANUAL NOTES", 0, .94, 16, shade=70)
+def draw_backup(card,snap,now,fields):
+    backups=snap.nas.backups if snap.nas else []
+    if not backups:
+        lines(card,"BACKBLAZE",[("Backup", "Not connected")]); return
+    b=backups[0]
+    def stamp(value):
+        return value.astimezone(now.tzinfo).strftime("%b %d %H:%M") if value else "Unknown"
+    values={"name":b.name,"state":b.state,"last_success":stamp(b.last_success),"last_run":stamp(b.last_run),
+            "duration":show(b.duration_seconds," s"),"schedule":b.schedule,"progress":show(b.percent,"%"),
+            "transfer":b.transfer or "—","enabled":"Yes" if b.enabled else "No"}
+    lines(card,"BACKBLAZE",[(key.replace("_"," ").capitalize(),values[key]) for key in fields])
 
 
-def draw_device(card, data, now):
-    card.text("KINDLE", 0, 0, 23, True)
-    status = "Charging" if data.charging else ("On battery" if data.charging is not None else "Power unknown")
-    card.text(f"{data.battery}% · {status}" if data.battery is not None else "Battery not reported", 0, .23, 30, True)
-    card.text(f"{data.width} × {data.height} · Wi-Fi {str(data.rssi)+' dBm' if data.rssi is not None else '—'}", 0, .48, 22)
-    card.text(f"Prior fetch: {data.fetch_seconds}s · Failures: {data.fetch_failures}" if data.fetch_seconds is not None else "Refresh manually from KUAL", 0, .66, 21)
-    success = datetime.fromtimestamp(data.last_success_epoch, now.tzinfo).strftime("%m/%d %H:%M") if data.last_success_epoch else "not reported"
-    card.text(f"Prior successful fetch: {success}", 0, .87, 18, shade=65)
+def draw_notes(card,layout,fields):
+    card.text(layout.notes_title.upper(),0,0,23,True)
+    if "notes" in fields:
+        for i,line in enumerate(layout.notes): card.text("· "+line,0,.20+i*.15,24,width=1)
+
+
+def draw_device(card,data,now,fields):
+    values={"battery":show(data.battery,"%"),"charging":"Charging" if data.charging else "On battery" if data.charging is not None else "Unknown",
+            "rssi":show(data.rssi," dBm"),"resolution":f"{data.width} × {data.height}",
+            "last_success":datetime.fromtimestamp(data.last_success_epoch,now.tzinfo).strftime("%m/%d %H:%M") if data.last_success_epoch else "—"}
+    for key in fields:
+        if key not in values: values[key]=show(getattr(data,key,None))
+    lines(card,"KINDLE",[(key.replace("_"," ").capitalize(),values[key]) for key in fields])
 
 
 def render_overview(data, settings, snapshot, now, layout):
-    c = Canvas(data.width, data.height, settings)
-    c.text("DAYLIGHT / PERSONAL DASHBOARD", .035, .021, 22, True, max_width=.70)
-    c.text(f"{data.battery}%" if data.battery is not None else "BATTERY —", .965, .021, 24, True, right=True, max_width=.21)
-    c.text(layout.title, .035, .052, 66, True, max_width=.70)
-    c.text(now.strftime("%H:%M"), .965, .06, 47, True, right=True, max_width=.23)
-    c.text(now.strftime("%A, %B %d, %Y"), .035, .104, 24, color=60, max_width=.65)
-    c.text("SAMPLE DATA" if snapshot.demo else "MANUAL REFRESH", .965, .106, 19, True, right=True, max_width=.28)
-    rows = widget_rows(layout.widgets)
-    weights = [max({"small": 2, "medium": 3, "large": 5}[w.size] for w in row) for row in rows]
-    gap = .011 if layout.density == "compact" else .019
-    available = .791-gap*(len(rows)-1)
-    y = .144
-    for row, weight in zip(rows, weights):
-        h = available*weight/sum(weights)
-        for col, widget in enumerate(row):
-            # A lone half card fills the row so it never wastes half the screen.
-            w = (.93-gap)/2 if len(row) == 2 else .93
-            x = .035+col*(w+gap)
-            card = Card(c, (x*c.width, y*c.height, w*c.width, h*c.height), widget.size, layout.density)
-            if widget.id == "weather": draw_weather(card, snapshot, now, layout.weather_units)
-            elif widget.id == "nas": draw_nas(card, snapshot, now)
-            elif widget.id == "markets": draw_markets(card, snapshot, now, layout.tickers, layout.market_columns)
-            elif widget.id == "notes": draw_notes(card, layout)
-            elif widget.id == "chatgpt": draw_chatgpt(card, snapshot, now)
-            else: draw_device(card, data, now)
-        y += h+gap
-    c.text(f"IMAGE {now:%Y-%m-%d %H:%M %Z} · STATUS AT GENERATION", .035, .952, 19, color=55, max_width=.93)
-    c.text("Cached image · KUAL → Dashboard: Next / Previous / Stop", .035, .976, 18, color=55, max_width=.93)
-    output = BytesIO()
-    c.image.save(output, format="PNG")
+    c=Canvas(data.width,data.height,settings)
+    rows=widget_rows(layout.widgets)
+    weights=[max({"small":2,"medium":3,"large":7}[w.size] for w in row) for row in rows]
+    gap=.010 if layout.density=="compact" else .018
+    available=.936-gap*(len(rows)-1)
+    y=.016
+    records=[]
+    for row,weight in zip(rows,weights):
+        h=available*weight/sum(weights)
+        for col,widget in enumerate(row):
+            w=(.956-gap)/2 if len(row)==2 else .956
+            card=Card(c,((.022+col*(w+gap))*c.width,y*c.height,w*c.width,h*c.height),widget.size,layout.density)
+            fields=selected(widget)
+            if widget.id=="weather":
+                draw_weather(card,snapshot,now,layout.weather_units,fields); records.append(snapshot.weather)
+            elif widget.id=="nas":
+                draw_nas(card,snapshot,now,fields); records.append(snapshot.nas)
+            elif widget.id=="backup":
+                draw_backup(card,snapshot,now,fields); records.append(snapshot.nas)
+            elif widget.id=="markets":
+                draw_markets(card,snapshot,now,layout.tickers,layout.market_columns,fields)
+                quotes={q.symbol:q for q in snapshot.quotes}
+                records.extend(quotes.get(t) for t in layout.tickers)
+            elif widget.id=="notes": draw_notes(card,layout,fields)
+            else: draw_device(card,data,now,fields)
+        y+=h+gap
+    warning=" · Sample data" if snapshot.demo else ""
+    stale=[r for r in records if r and r.status(now)!="CURRENT"]
+    if stale: warning+=" · Older data " + min(r.as_of for r in stale).astimezone(now.tzinfo).strftime("%m/%d %H:%M")
+    if any(r is None for r in records): warning+=" · Some data unavailable"
+    c.text(f"Updated {now:%m/%d %H:%M %Z}"+warning,.024,.971,20,color=65,max_width=.952)
+    output=BytesIO(); c.image.save(output,format="PNG")
     return output.getvalue()

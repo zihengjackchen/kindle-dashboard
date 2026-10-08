@@ -2,7 +2,7 @@
   "items": [{
     "name": "Dashboard",
     "items": [
-      {"name": "Start Dashboard", "priority": 1, "action": "sh ./start.sh", "exitmenu": true, "status": false},
+      {"name": "Start Dashboard", "priority": 1, "action": "sh ./app-launch.sh", "exitmenu": true, "status": false},
       {"name": "Refresh Dashboard", "priority": 2, "action": "sh ./refresh-once.sh", "exitmenu": true, "status": false},
       {"name": "Next Dashboard (cached)", "priority": 3, "action": "sh ./page.sh next", "exitmenu": true, "status": false},
       {"name": "Previous Dashboard (cached)", "priority": 4, "action": "sh ./page.sh previous", "exitmenu": true, "status": false},

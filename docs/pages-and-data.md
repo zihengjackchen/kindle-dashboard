@@ -1,5 +1,7 @@
 # Pages, previews and persistent input data
 
+> Library app update: see [Kindle app](kindle-app.md) and [editor](dashboard-editor.md). The manual KUAL workflow below remains a fallback; its restrictions do not describe the new app timers and touch controls.
+
 Five page IDs are implemented on the existing image endpoint: `overview`,
 `weather`, `markets-1`, `markets-2`, `nas`. For example:
 
@@ -50,7 +52,7 @@ selected page. Direct taps on the dashboard itself are not implemented.
 ## Supply source data without fake live values
 
 `server/app/snapshots.py` defines a validated JSON schema for weather, watchlist
-quotes, NAS metrics and optional ChatGPT usage summaries. A complete example is
+quotes, NAS metrics and Backblaze backup summaries. A complete example is
 `docs/previews/sample-snapshot.json`. Records contain source name, timezone-aware
 `as_of` and `valid_until`. Expired values remain visible as STALE with their
 original source time. Future source timestamps render CHECK TIME. Quote basis is

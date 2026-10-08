@@ -36,9 +36,19 @@
 : "${WAKE_SETTLE_SECONDS:=1}"
 : "${LIPC_WAIT_BIN:=lipc-wait-event}"
 : "${DEFAULT_PAGE:=overview}"
-# Reserved policy values only. No scheduler or power command is implemented.
+# Legacy framebuffer actions have no scheduler. The library app uses NAS layout
+# intervals for its own foreground refresh timer, independent of these flags.
 : "${ENABLE_EXPERIMENTAL_POWER:=0}"
 : "${AUTO_REFRESH:=0}"
 : "${NORMAL_INTERVAL_MINUTES:=60}"
 : "${NIGHT_INTERVAL_MINUTES:=240}"
 : "${LOW_BATTERY_PERCENT:=20}"
+# Library app. Existing BusyBox must include httpd/CGI; no downloaded binary.
+: "${BUSYBOX_BIN:=busybox}"
+: "${APP_PORT:=18765}"
+: "${APP_FRONTLIGHT_OFF:=1}"
+# Keep disabled until activeApp, powerd state/isUsbConnected and this property
+# have been verified on the physical Kindle. Applies only while plugged in.
+: "${KEEP_AWAKE_PLUGGED:=0}"
+# Older Paperwhites may need this verified sysfs path for true light-off.
+: "${VERIFIED_FRONTLIGHT_PATH:=}"

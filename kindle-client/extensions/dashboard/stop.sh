@@ -2,6 +2,21 @@
 DASHBOARD_DIR=$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd) || exit 1
 # shellcheck source=lib/client.sh
 . "$DASHBOARD_DIR/lib/client.sh"
+. "$DASHBOARD_DIR/lib/app-power.sh"
+# Revoke bridge access immediately, even while a download is in progress.
+rm -f "$STATE_DIR/app-key"
+app_power_release
+app_light_restore
+if [ -f "$STATE_DIR/app.pid" ]; then
+    app_pid=$(read_first "$STATE_DIR/app.pid")
+    if is_uint "$app_pid" && [ -r "/proc/$app_pid/cmdline" ] && tr '\000' '\n' < "/proc/$app_pid/cmdline" | grep -F -x "$DASHBOARD_DIR/app-session.sh" >/dev/null; then
+        kill -TERM "$app_pid" 2>/dev/null || :
+    else
+        rm -f "$STATE_DIR/app.pid" "$STATE_DIR/app-heartbeat"
+        rmdir "$STATE_DIR/app.lock" 2>/dev/null || :
+    fi
+    probe lipc-set-prop com.lab126.appmgrd start app://com.lab126.booklet.home >/dev/null || :
+fi
 # Stop always works with the kill switch present or automation flags misconfigured.
 rm -f "$STATE_DIR/active"
 stop_listener

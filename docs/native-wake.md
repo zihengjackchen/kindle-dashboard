@@ -1,5 +1,7 @@
 # Accept native sleep, restore after native lockscreen exit
 
+> Library app update: see [Kindle app](kindle-app.md) and [editor](dashboard-editor.md). The manual KUAL workflow below remains a fallback; its restrictions do not describe the new app timers and touch controls.
+
 The session implementation is complete and mock-testable. Its physical Kindle
 profile is deliberately **disabled by default** because model, firmware and
 lockscreen state semantics have not yet been supplied. It never stops powerd,

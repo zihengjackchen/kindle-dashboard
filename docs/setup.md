@@ -1,5 +1,7 @@
 # Install Daylight
 
+> Library app update: see [Kindle app](kindle-app.md) and [editor](dashboard-editor.md). The manual KUAL workflow below remains a fallback; its restrictions do not describe the new app timers and touch controls.
+
 ## Prepare a matching Kindle and NAS configuration
 
 Use Python 3.13 with the project's requirements installed. From the repository root:
@@ -70,7 +72,6 @@ For a deployment that waits for readiness, use
 | Market delay label | `MARKET_DATA_DELAYED=1` | Conservative default; change only when your account's data entitlement supports it |
 | BTC/ETH | `CRYPTO_ENABLED=1` | Coinbase public USD product statistics, rolling 24-hour change; timestamp explicitly means observed at |
 | TrueNAS | `NAS_SNAPSHOT_PATH=/data/nas.json` | Reads the limited host export described below |
-| ChatGPT usage | `CHATGPT_SNAPSHOT_PATH=/data/chatgpt.json` | Reads a filtered snapshot exported from a signed-in PC; see [usage sync](chatgpt-usage.md) |
 
 Weather and quote source timestamps are retained when a fetch fails. Missing data
 stays unavailable; synthetic prices are never used outside the labeled previews.

@@ -1,5 +1,7 @@
 # Exit and recovery
 
+> Library app update: see [Kindle app](kindle-app.md) and [editor](dashboard-editor.md). The manual KUAL workflow below remains a fallback; its restrictions do not describe the new app timers and touch controls.
+
 The client never stops Amazon's framework, grabs input, alters the lockscreen,
 or registers a boot task. With wake restoration enabled, a session owns a blocking
 event subscriber; Stop disarms and terminates it. An active state file alone is

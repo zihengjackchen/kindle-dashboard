@@ -64,3 +64,16 @@ def test_truenas_export_filters_private_fields_and_keeps_fault_health(monkeypatc
     assert result['pool_health'] == 'FAULTED' and result['used_percent'] is None
     assert result['alerts'] == 1 and result['memory_percent'] == 75
     assert 'PRIVATE' not in str(result)
+
+
+def test_backup_export_reports_success_without_paths_or_credentials():
+    exporter=module('export-truenas')
+    record=exporter.backup_summary({'description':'Camera backup','enabled':True,
+        'credentials':{'secret':'PRIVATE'},'path':'PRIVATE',
+        'schedule':{'minute':'0','hour':'0','dom':'*','month':'*','dow':'sun'},
+        'job':{'state':'SUCCESS','time_started':{'$date':1791097201000},'time_finished':{'$date':1791097228000},
+               'progress':{'percent':100,'description':'11 / 11, 3.711 MiB / 3.711 MiB, PRIVATE'}}})
+    assert record['state']=='SUCCESS' and record['duration_seconds']==27
+    assert record['last_success']=='2026-10-04T07:00:28+00:00'
+    assert record['transfer']=='3.711 MiB / 3.711 MiB'
+    assert record['schedule']=='Sun 00:00' and 'PRIVATE' not in str(record)

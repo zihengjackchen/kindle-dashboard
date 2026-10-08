@@ -1,5 +1,7 @@
 # Battery measurements and contact telemetry
 
+> Library app update: see [Kindle app](kindle-app.md) and [editor](dashboard-editor.md). The manual KUAL workflow below remains a fallback; its restrictions do not describe the new app timers and touch controls.
+
 The client reads device state only during existing actions. It never wakes to
 sample, polls a timer, holds a wake lock, or modifies Wi-Fi/frontlight settings.
 Power handling remains native. The optional wake listener blocks on events and

@@ -1,5 +1,7 @@
 # Dashboard product and data contract — proposed v1
 
+> Library app update: see [Kindle app](kindle-app.md) and [editor](dashboard-editor.md). The manual KUAL workflow below remains a fallback; its restrictions do not describe the new app timers and touch controls.
+
 Status: v1 target design, recorded 2026-10-01. The current `/dashboard.png` endpoint
 now implements overview, weather, markets-1, markets-2 and NAS pages from validated
 persisted snapshots. Offline KUAL navigation and a guarded native-wake listener

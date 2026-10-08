@@ -1,0 +1,71 @@
+"""Browser contract tests for app navigation, decoding, timers and lifecycle.
+
+Uses a mocked local CGI service, not Kindle hardware. Shell CGI has separate tests.
+"""
+import json
+import os
+from pathlib import Path
+from io import BytesIO
+from PIL import Image
+from playwright.sync_api import sync_playwright
+
+ROOT=Path(__file__).resolve().parents[1]
+APP=ROOT/'kindle-client/extensions/dashboard/app'
+
+
+def main():
+    calls=[]
+    out=BytesIO(); Image.new('L',(600,800),240).save(out,format='PNG'); png=out.getvalue()
+    with sync_playwright() as pw:
+        options={'headless':True}
+        if os.getenv('DASHBOARD_TEST_BROWSER'): options['executable_path']=os.environ['DASHBOARD_TEST_BROWSER']
+        browser=pw.chromium.launch(**options)
+        page=browser.new_page(viewport={'width':600,'height':800})
+        page.clock.install()
+        errors=[]; page.on('pageerror',lambda e:errors.append(str(e)))
+        def route(request):
+            path=request.request.url.split('http://kindle.test',1)[1]
+            if path.startswith('/cgi-bin/action?'):
+                action=path.split('?',1)[1];calls.append(action)
+                assert request.request.headers.get('x-dashboard-session')=='test'
+                if action=='settings':
+                    request.fulfill(json={'pages':[{'id':'overview','name':'Overview'},{'id':'nas','name':'Server'}],
+                                          'refresh_minutes':5,'night_minutes':15,'rotation_minutes':0})
+                elif action.startswith(('fetch=','cached=')):
+                    request.fulfill(body=png,headers={'Content-Type':'image/png','X-Dashboard-Revision':'3000000000','X-Dashboard-Battery':'90'})
+                else: request.fulfill(json={'ok':True})
+            elif path=='/session.js': request.fulfill(body='window.DASHBOARD={base:"http://kindle.test",key:"test"}',content_type='application/javascript')
+            else:
+                name='index.html' if path=='/' else path[1:]
+                request.fulfill(body=(APP/name).read_text(encoding='utf-8'),content_type='application/javascript' if name.endswith('.js') else 'text/html')
+        page.route('http://kindle.test/**',route)
+        page.add_init_script('window.kindle={appmgr:{},messaging:{sendMessage:function(){}}}')
+        page.goto('http://kindle.test/')
+        page.locator('#image').wait_for(state='visible')
+        page.wait_for_function("document.querySelector('#message').textContent==='Overview'")
+        page.wait_for_timeout(300)
+        assert 'fetch=overview' in calls and 'commit=overview:3000000000' in calls
+        assert page.locator('#image').bounding_box()['height'] < 800
+        page.locator('#next').click()
+        page.wait_for_function("document.querySelector('#message').textContent==='Server'")
+        page.wait_for_timeout(300)
+        assert 'fetch=nas' in calls
+        count=calls.count('fetch=nas')
+        page.clock.fast_forward(16*60000)
+        page.wait_for_timeout(500)
+        assert calls.count('fetch=nas')>count
+        page.evaluate('window.kindle.appmgr.onpause()')
+        count=len(calls); page.clock.fast_forward(16*60000); page.wait_for_timeout(100)
+        assert len(calls)==count
+        page.evaluate('window.kindle.appmgr.ongo()')
+        page.locator('#close').click()
+        page.wait_for_function("document.querySelector('#message').textContent==='Closed'")
+        assert 'close' in calls and calls.count('enter')>=2
+        assert not errors, errors
+        folder=ROOT/'.tools/app-tests';folder.mkdir(parents=True,exist_ok=True)
+        page.screenshot(path=str(folder/'app.png'))
+        browser.close()
+    print('Kindle app browser checks passed: entry, image decode/commit, navigation, auto refresh, pause/resume, Close.')
+
+
+if __name__=='__main__': main()

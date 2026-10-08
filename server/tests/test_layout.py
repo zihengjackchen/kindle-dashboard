@@ -43,7 +43,7 @@ def test_preview_is_ephemeral_and_save_survives_restart(editor):
     assert client.get("/layout", headers=AUTH).json()["layout"] == initial
     assert client.put("/layout", json=changed, headers=AUTH).status_code == 200
     restored = TestClient(create_app(settings))
-    assert restored.get("/layout", headers=AUTH).json()["layout"] == changed
+    assert restored.get("/layout", headers=AUTH).json()["layout"] == Layout.model_validate(changed).model_dump(mode="json")
     response = restored.get("/dashboard.png?width=1072&height=1448", headers=AUTH)
     assert response.status_code == 200
     assert response.content != client.post("/preview.png?width=1072&height=1448", json=initial, headers=AUTH).content
@@ -110,12 +110,12 @@ def test_saving_disabled_without_persistent_path():
     assert client.put("/layout", json={}, headers=AUTH).status_code == 503
 
 
-def test_extended_watchlist_dual_units_and_usage_widget():
+def test_extended_watchlist_dual_units_and_backup_widget():
     from app.widgets import temperatures
     from app.snapshots import SUPPORTED_SYMBOLS
     assert temperatures(32, "F") == "0°C / 32°F"
     assert temperatures(20, "C") == "20°C / 68°F"
-    layout = Layout(widgets=[Widget(id="markets", width="full", size="large"), Widget(id="chatgpt")], tickers=list(SUPPORTED_SYMBOLS))
+    layout = Layout(widgets=[Widget(id="markets", width="full", size="large"), Widget(id="backup")], tickers=list(SUPPORTED_SYMBOLS))
     for width, height in ((600, 800), (1072, 1448), (1648, 1236)):
         png = render_dashboard(DashboardRequest(width=width, height=height), Settings(), layout=layout)
         image = Image.open(BytesIO(png))

@@ -20,6 +20,10 @@ class DashboardRequest(BaseModel):
     fetch_seconds: int | None = Field(default=None, ge=0, le=86400)
     fetch_failures: int | None = Field(default=None, ge=0, le=999999)
     last_success_epoch: int | None = Field(default=None, ge=0, le=4102444800)
+    frontlight: int | None = Field(default=None, ge=0, le=100)
+    uptime_seconds: int | None = Field(default=None, ge=0, le=2147483647)
+    storage_free_mib: int | None = Field(default=None, ge=0, le=1000000)
+    firmware: str | None = Field(default=None, max_length=80, pattern=r"^[A-Za-z0-9._-]+$")
 
     @field_validator("width", "height")
     @classmethod

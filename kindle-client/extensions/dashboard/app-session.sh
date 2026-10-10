@@ -2,6 +2,8 @@
 DASHBOARD_DIR=$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd) || exit 1
 . "$DASHBOARD_DIR/lib/client.sh"
 . "$DASHBOARD_DIR/lib/app-power.sh"
+. "$DASHBOARD_DIR/lib/httpd.sh"
+select_httpd || exit 1
 [ "$1" = "$(read_first "$STATE_DIR/app-key")" ] || exit 1
 APP_KEY=$1
 mkdir "$STATE_DIR/app.lock" 2>/dev/null || exit 1
@@ -22,7 +24,7 @@ printf '%s\n' "$$" > "$STATE_DIR/app.pid"
 date +%s > "$STATE_DIR/app-heartbeat"
 printf 'mode=app\n' > "$STATE_DIR/active"
 export DASHBOARD_DIR
-"$BUSYBOX_BIN" httpd -f -p "127.0.0.1:$APP_PORT" -h "$STATE_DIR/web" &
+"$HTTPD_BIN" httpd -f -p "127.0.0.1:$APP_PORT" -h "$STATE_DIR/web" &
 HTTP_PID=$!
 frontlight_off || :
 was_foreground=0

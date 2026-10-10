@@ -7,6 +7,7 @@ init_client || exit 1
 . "$DASHBOARD_DIR/lib/display.sh"
 # shellcheck source=lib/device-info.sh
 . "$DASHBOARD_DIR/lib/device-info.sh"
+. "$DASHBOARD_DIR/lib/httpd.sh"
 acquire_lock || exit 1
 TMP_REPORT=$(mktemp "$LOG_DIR/diagnostics.tmp.XXXXXX") || exit 1
 diagnostic_report() {
@@ -46,7 +47,8 @@ diagnostic_report() {
         fi
         printf '\n--- App capabilities ---\n'
         probe lipc-get-prop com.lab126.appmgrd activeApp
-        busybox httpd --help 2>&1 | head -n 20
+        select_httpd || :
+        cat "$LOG_DIR/httpd-probe.txt"
         for light in /sys/class/backlight/*/brightness; do
             [ -r "$light" ] || continue
             printf '%s: ' "$light"; head -c 64 "$light"; printf '\n'

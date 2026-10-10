@@ -153,3 +153,28 @@ true light-off, resume and overnight plugged-in behavior have NOT been verified.
 `KEEP_AWAKE_PLUGGED=0`; no raw suspend or scheduled wake behavior is enabled.
 Earlier statements above about ChatGPT snapshots describe the prior release;
 that collector/exporter/widget has now been removed.
+
+## USB startup repair - October 9, 2026
+
+The connected device's four launch attempts all stopped at missing BusyBox
+httpd support. Installed scripts matched the release; no app session was started.
+The original extension and Document launcher were backed up privately before
+writing anything to the device.
+
+Added private-helper detection, bounded capability probes, retained startup
+stderr, and an awake-only error notice. Prepared NiLuJe's legacy K5 BusyBox from
+a pinned, SHA256-verified archive. ELF inspection confirms ARM32, the legacy
+`/lib/ld-linux.so.3` loader and GLIBC_2.4 symbols; dependencies are libcrypt.so.1,
+librt.so.1 and libc.so.6. No USBNetwork installer or system replacement was run.
+
+Client/download/cache and new HTTP helper tests: 36 passed, one platform skip.
+Four bridge/power tests also passed. ShellCheck and diff whitespace checks pass.
+Both ZIPs were rebuilt; private helper bytes, executable mode, and LF script
+endings were checked. Public ZIP excludes the binary and private configuration.
+The six changed scripts and helper files on G: were verified by read-back;
+the private device configuration checksum is unchanged.
+
+USB storage access cannot execute Kindle programs. Dynamic loading, CGI bridge
+self-check and Mesquite app opening still require safely ejecting and launching
+on the physical Kindle. New startup/probe logs will expose the next failure if
+another firmware incompatibility exists. NAS software was unchanged.

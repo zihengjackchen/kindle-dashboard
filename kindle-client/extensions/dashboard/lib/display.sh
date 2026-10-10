@@ -1,4 +1,13 @@
 #!/bin/sh
+display_notice() {
+    if [ "$MOCK_MODE" = 1 ]; then log "MOCK notice: $*"; return 0; fi
+    # Never place an error notice on the native lockscreen.
+    [ "$(probe lipc-get-prop com.lab126.powerd state)" = active ] || return 0
+    command -v "$EIPS_BIN" >/dev/null 2>&1 || return 0
+    "$EIPS_BIN" 1 2 "$1" >/dev/null 2>&1 || :
+    "$EIPS_BIN" 1 3 "$2" >/dev/null 2>&1 || :
+}
+
 display_backend() {
     BACKEND=
     case "$DISPLAY_BACKEND" in

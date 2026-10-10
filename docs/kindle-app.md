@@ -14,11 +14,46 @@ it does not embed Wordle or KOReader. The owner reports KWordle working on firmw
    **Start Dashboard** launches the same app. Existing Refresh/Next/Previous items
    remain a framebuffer fallback.
 3. First launch checks for existing `mesquite`, `sqlite3`, `curl`, `cksum`, and
-   BusyBox `httpd` with CGI support. No compiled binary is downloaded or bundled.
-   A missing capability is logged to `extensions/dashboard/logs/dashboard.log`.
+   BusyBox `httpd` with CGI support. Stock Kindle BusyBox often lacks `httpd`;
+   see the helper installation below. Failures are recorded in
+   `logs/dashboard.log`, `logs/startup.log`, and `logs/httpd-probe.txt`, with a
+   short on-screen notice when the Kindle is awake.
 4. A reversible entry is registered for `org.kindledashboard.app` in
    `/var/local/appreg.db`. Its manifest lives in
    `/var/local/mesquite/org.kindledashboard.app/`. No boot or lockscreen files change.
+
+### HTTP helper for legacy ARM Kindles
+
+The October 9 device log showed `App requires BusyBox httpd with CGI support`.
+Both launch routes stopped at this dependency check, before contacting the NAS.
+The launcher now tries `extensions/dashboard/bin/busybox`, system BusyBox, then
+an already-installed USBNet BusyBox. An explicit `BUSYBOX_BIN` overrides detection.
+The probe report retains loader errors as well as missing-applet errors.
+
+For this ARMv7 Paperwhite on 5.16.2.1.1, prepare NiLuJe's published K5 helper on
+your computer (Python 3 required):
+
+```sh
+python scripts/prepare-httpd.py
+```
+
+Copy the three files in `dist/private/httpd-helper/` into the Kindle's
+`extensions/dashboard/bin/`. The script checks pinned archive and executable
+SHA256 hashes and extracts only the prebuilt helper plus credits. It never runs
+the USBNetwork installer or replaces system BusyBox. It does not compile anything.
+Keep the helper in the private installation; public source/client releases omit
+the binary. Other architectures, including newer armhf Kindles, need their own
+verified compatible helper. The loopback CGI self-check runs on every launch.
+
+To include it in a private USB installation ZIP:
+
+```sh
+python scripts/package-client.py --httpd-helper-dir dist/private/httpd-helper --output dist/private/kindle-dashboard-client.zip
+```
+
+Safely eject USB before launching. If it still closes, reconnect and inspect the
+three logs above. Host tests cannot verify the Kindle dynamic loader or Mesquite;
+a successful on-device launch remains required.
 
 ## Controls and refresh
 
@@ -62,7 +97,7 @@ pressing the power button. A screenshot/photo cannot establish the power state.
 
 ## Local bridge and cache
 
-An existing BusyBox HTTP daemon binds **127.0.0.1:18765 only**, while the app is
+A compatible BusyBox HTTP daemon binds **127.0.0.1:18765 only**, while the app is
 open. The app manifest points at an unguessable session directory on that origin,
 avoiding file-URL CORS problems in old WebKit. No CORS grant is sent. CGI actions
 require POST plus a random per-session header; NAS credentials never enter the

@@ -12,8 +12,10 @@ NAS browser. Amazon Special Offers and its normal lockscreen remain untouched.
   `docker compose -p kindle-dashboard --profile live up -d --build` in `server/`.
 - Kindle: extract the configured private ZIP into the USB root, merging both
   `documents/` and `extensions/`. Safely eject, then open Dashboard in the library.
-- The library app uses existing Mesquite, sqlite3, curl and BusyBox httpd/CGI.
-  It checks these capabilities before launch. No custom binary is bundled.
+- The library app uses Mesquite, sqlite3, curl and BusyBox httpd/CGI.
+  Stock Kindle BusyBox may lack httpd: the private installation includes a
+  verified upstream helper. Public ZIP users should follow the
+  [helper setup](docs/kindle-app.md#http-helper-for-legacy-arm-kindles).
 - [Kindle app installation, power behavior and recovery](docs/kindle-app.md)
 - [Dashboard editor](docs/dashboard-editor.md)
 

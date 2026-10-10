@@ -2,12 +2,27 @@
 # shellcheck disable=SC2153
 DASHBOARD_DIR=$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd) || exit 1
 . "$DASHBOARD_DIR/lib/client.sh"
+. "$DASHBOARD_DIR/lib/httpd.sh"
+# Keep failures visible after KUAL closes, and retain bounded startup stderr.
+startup_exit() {
+    startup_status=$?
+    trap - 0
+    if [ "$startup_status" -ne 0 ]; then
+        log "Dashboard launch failed (exit $startup_status); see logs/startup.log and logs/httpd-probe.txt"
+        sleep "$KUAL_SETTLE_SECONDS"
+        display_notice 'Dashboard could not start' 'See extensions/dashboard/logs'
+    fi
+    exit "$startup_status"
+}
+trap startup_exit 0
+if [ -f "$LOG_DIR/startup.log" ] && [ "$(wc -c < "$LOG_DIR/startup.log")" -ge "$MAX_LOG_BYTES" ]; then mv -f "$LOG_DIR/startup.log" "$LOG_DIR/startup.log.1"; fi
+exec 2>> "$LOG_DIR/startup.log"
 check_enabled || exit 1
 # Detect capabilities before registering anything or changing light/power.
 for app_command in sqlite3 lipc-get-prop lipc-set-prop mesquite curl cksum; do
     command -v "$app_command" >/dev/null 2>&1 || { fail "App requires $app_command; use KUAL Refresh as fallback"; exit 1; }
 done
-"$BUSYBOX_BIN" httpd --help 2>&1 | grep -q -- '-p' || { fail 'App requires BusyBox httpd with CGI support; see docs/kindle-app.md'; exit 1; }
+select_httpd || exit 1
 if [ -f "$STATE_DIR/app.pid" ]; then
     pid=$(read_first "$STATE_DIR/app.pid")
     if is_uint "$pid" && [ -r "/proc/$pid/cmdline" ] && tr '\000' '\n' < "/proc/$pid/cmdline" | grep -F -x "$DASHBOARD_DIR/app-session.sh" >/dev/null; then
@@ -44,7 +59,7 @@ sed "s|src=\"index.html\"|src=\"http://127.0.0.1:$APP_PORT/$SESSION_KEY/index.ht
 cp "$DASHBOARD_DIR/app/bridge.cgi" "$STATE_DIR/web/cgi-bin/action"
 chmod 700 "$STATE_DIR/web/cgi-bin/action"
 export DASHBOARD_DIR
-nohup /bin/sh "$DASHBOARD_DIR/app-session.sh" "$SESSION_KEY" >/dev/null 2>&1 &
+nohup /bin/sh "$DASHBOARD_DIR/app-session.sh" "$SESSION_KEY" >/dev/null 2>> "$LOG_DIR/startup.log" &
 sleep 1
 [ -f "$STATE_DIR/app.pid" ] || { fail 'App bridge failed to start'; exit 1; }
 if ! curl -q -fsS --max-time 5 -X POST --header "X-Dashboard-Session: $SESSION_KEY" "http://127.0.0.1:$APP_PORT/cgi-bin/action?heartbeat" | grep -q '"ok":true'; then

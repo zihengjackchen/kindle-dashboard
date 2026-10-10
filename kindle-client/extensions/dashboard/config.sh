@@ -43,8 +43,9 @@
 : "${NORMAL_INTERVAL_MINUTES:=60}"
 : "${NIGHT_INTERVAL_MINUTES:=240}"
 : "${LOW_BATTERY_PERCENT:=20}"
-# Library app. Existing BusyBox must include httpd/CGI; no downloaded binary.
-: "${BUSYBOX_BIN:=busybox}"
+# Library app: auto detects the private app helper, stock BusyBox, then USBNet.
+# Stock Kindle BusyBox commonly lacks httpd. See scripts/prepare-httpd.py.
+: "${BUSYBOX_BIN:=auto}"
 : "${APP_PORT:=18765}"
 : "${APP_FRONTLIGHT_OFF:=1}"
 # Keep disabled until activeApp, powerd state/isUsbConnected and this property

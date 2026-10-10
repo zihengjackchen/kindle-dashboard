@@ -8,6 +8,7 @@ source = ROOT / "kindle-client"
 extension = source / "extensions" / "dashboard"
 parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument("--private-config", type=Path, help="Explicitly include a private config.local.sh")
+parser.add_argument("--httpd-helper-dir", type=Path, help="Include prepared helper in a private installation ZIP")
 parser.add_argument("--output", type=Path, default=ROOT / "dist" / "kindle-dashboard-client.zip")
 args = parser.parse_args()
 destination = args.output
@@ -26,4 +27,11 @@ with ZipFile(destination, "w", ZIP_DEFLATED) as archive:
         archive.writestr(f"extensions/dashboard/{folder}/", b"")
     if args.private_config:
         archive.writestr("extensions/dashboard/config.local.sh", args.private_config.read_bytes().replace(b"\r\n", b"\n"))
+    if args.httpd_helper_dir:
+        for name in ("busybox", "PROVENANCE.txt", "upstream-README.txt"):
+            entry = ZipInfo("extensions/dashboard/bin/" + name)
+            entry.create_system = 3
+            entry.external_attr = (0o100755 if name == "busybox" else 0o100644) << 16
+            entry.compress_type = ZIP_DEFLATED
+            archive.writestr(entry, (args.httpd_helper_dir / name).read_bytes())
 print(destination)

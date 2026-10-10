@@ -1,5 +1,6 @@
 .venv/
 .tools/
+kindle-client/extensions/dashboard/bin/
 kindle-client/extensions/dashboard/config.local.sh
 __pycache__/
 *.py[cod]

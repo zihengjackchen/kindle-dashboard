@@ -41,6 +41,26 @@ def test_power_and_light_are_scoped_and_restored(setup):
     app=other.app
     app_power_update
     [ "$inhibited" = 0 ] || exit 16
+    app=org.kindledashboard.app
+    usb=
+    app_power_update
+    [ "$inhibited" = 0 ] || exit 19
+    VERIFIED_EXTERNAL_POWER_PATH=/sys/class/power_supply/test/present
+    present=1
+    read_first() {
+        if [ "$1" = "$VERIFIED_EXTERNAL_POWER_PATH" ]; then echo "$present";
+        else [ ! -r "$1" ] || head -n 1 "$1"; fi
+    }
+    app_power_update
+    [ "$inhibited" = 1 ] || exit 20
+    present=0
+    app_power_update
+    [ "$inhibited" = 0 ] || exit 21
+    present=1; inhibited=1
+    app_power_update
+    [ ! -f "$STATE_DIR/prior-inhibit" ] || exit 22
+    app_power_release
+    [ "$inhibited" = 1 ] || exit 23
     app_light_restore
     [ "$light" = 8 ] || exit 17
     [ ! -f "$STATE_DIR/prior-light" ] || exit 18

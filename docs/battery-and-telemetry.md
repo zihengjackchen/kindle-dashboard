@@ -2,10 +2,14 @@
 
 ## Current library app: measured capabilities, not a runtime promise
 
-The app uses Mesquite/WebKit, a loopback HTTP helper, a supervisor polling every
-10 seconds, and a browser heartbeat every 20 seconds while active. These checks
-do not contact the NAS, but consume CPU and write local heartbeat state. They
-are frozen during real system suspend; they do not provide scheduled wakeups.
+The app retains Mesquite/WebKit and a loopback HTTP helper while open. The old
+20-second browser heartbeat and 10-second supervisor polling are removed. Native
+app/power/HAL events wake a blocking supervisor; one 30-second startup check and
+30-minute fallback audits cover failed launches and missed events. Events handle
+normal exit promptly instead of delaying cleanup for 30 minutes. The heartbeat
+was a liveness lease for crash cleanup, never a requirement for the e-ink image.
+Its removal means a hung JavaScript page is no longer detected by a 90-second
+lease; native crash/exit events and the fallback process checks provide cleanup.
 There is no continuous NAS connection, animation, or continuous PNG rendering.
 
 Implemented savings: NAS-side rendering, default hourly refresh, four-hour night
@@ -15,19 +19,22 @@ The app sets the native frontlight level to zero, then restores the previous
 level on exit. True LED-off on this Paperwhite has not been established.
 Wi-Fi remains under the normal Kindle policy; this client does not deliberately
 turn the radio off between image fetches. Automatic page rotation is optional
-and generates additional downloads if enabled.
+and switches already-cached images without additional downloads.
 
 Deep suspend, RTC alarms and CPU governor changes are **not implemented**.
 `KEEP_AWAKE_PLUGGED=0` remains the default and the installed setting. With normal
 sleep enabled, the Amazon lockscreen may replace the app. This is not yet a
 validated combination of uninterrupted 24/7 visibility and low battery drain.
 
-The October 9 live audit found 100% battery on external power and KOSSH running
+The October 9 live audit found KOSSH running
 with `preventScreenSaver=1`. KOSSH also redraws its address every three seconds.
 That debugging state is unsuitable for a battery benchmark. The device's raw
 fuel-gauge attributes have inconsistent-looking units, so no runtime is inferred
 from them. Also, `powerd.isUsbConnected` is absent on this firmware: the optional
-plugged-in keep-awake detection needs a verified alternative before enabling it.
+plugged-in keep-awake detection now supports a verified sysfs alternative. The
+candidate is `/sys/class/power_supply/max77696-uic/present`. Do not use the charger
+`online` flag: it read 1 while `present` was 0 and the battery reported discharging.
+Physical plug/unplug confirmation is required before enabling this device profile.
 
 No unplugged endurance measurement exists for this app. A continuously awake
 browser should not be assigned the multi-week claims of a suspended display.
@@ -99,7 +106,7 @@ Logs rotate at the configured size; `.1` is the preceding file.
 These are independently implemented ideas. No upstream code was copied. We did
 not adopt framework shutdown, direct kernel suspend, RTC writes, radio resets,
 watchdog respawns or remote self-updates. A foreground-only plugged-in sleep
-inhibitor exists but is disabled and not yet usable on this firmware as noted
-above. Jstriblet's main battery advantage is suspend-to-RAM plus RTC wake; its
+inhibitor exists, with event-driven release and a configurable external-power
+indicator; hardware acceptance remains required as noted above. Jstriblet's main battery advantage is suspend-to-RAM plus RTC wake; its
 screen takeover also stops the native GUI. Those are materially different from
 our interactive app and cannot be enabled here by copying a sleep command.

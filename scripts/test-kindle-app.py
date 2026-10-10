@@ -60,35 +60,33 @@ def main():
         page.add_init_script('window.kindle={appmgr:{},messaging:{sendMessage:function(){}}}')
         page.goto('http://kindle.test/')
         page.locator('#image').wait_for(state='visible')
-        page.wait_for_function("document.querySelector('#message').textContent==='Overview'")
+        page.wait_for_function("document.querySelector('#refresh').textContent==='Refresh' && !document.querySelector('#refresh').disabled")
         page.wait_for_timeout(300)
         assert calls.count('bundle')==1 and 'commit-bundle=3000000000' in calls
         assert page.locator('#close').count()==0
         assert page.locator('#image').bounding_box()['height'] < 800
-        assert requested_sizes[-1] == (584,708)
+        assert requested_sizes[-1] == (584,730)
         def assert_fills_canvas():
             canvas=page.locator('#screen').bounding_box(); drawn=page.locator('#image').bounding_box()
             for k in ('x','y','width','height'): assert abs(canvas[k]-drawn[k])<=1,(canvas,drawn)
             assert page.locator('#controls').bounding_box()['y'] < drawn['y']
-            status=page.locator('#message').bounding_box(); controls=page.locator('#controls').bounding_box()
-            assert controls['y']+controls['height'] < status['y']
-            assert status['y']+status['height'] < drawn['y']
+            assert not page.locator('#message').is_visible()
         assert_fills_canvas()
         count=len(calls)
         page.locator('#next').click()
-        page.wait_for_function("document.querySelector('#message').textContent==='Server'")
+        page.wait_for_function("document.querySelector('#refresh').textContent==='Refresh' && !document.querySelector('#refresh').disabled")
         page.wait_for_timeout(300)
         assert len(calls)==count  # Navigation makes no bridge or NAS requests.
         page.set_viewport_size({'width':800,'height':600})
         page.clock.fast_forward(1000)
         page.wait_for_function("document.querySelector('#image').naturalWidth===784")
-        assert requested_sizes[-1] == (784,508)
+        assert requested_sizes[-1] == (784,530)
         assert_fills_canvas()
         page.evaluate('Object.defineProperty(window,"devicePixelRatio",{value:2,configurable:true})')
         page.set_viewport_size({'width':640,'height':900})
         page.clock.fast_forward(1000)
         page.wait_for_function("document.querySelector('#image').naturalWidth===624")
-        assert requested_sizes[-1] == (624,808)  # Mesquite density must not upsample.
+        assert requested_sizes[-1] == (624,830)  # Mesquite density must not upsample.
         assert_fills_canvas()
         count=calls.count('bundle')
         page.clock.fast_forward(16*60000)
@@ -98,7 +96,7 @@ def main():
         count=len(calls); page.clock.fast_forward(16*60000); page.wait_for_timeout(100)
         assert len(calls)==count
         page.evaluate('window.kindle.appmgr.ongo()')
-        page.wait_for_function("document.querySelector('#message').textContent==='Server'")
+        page.wait_for_function("document.querySelector('#refresh').textContent==='Refresh' && !document.querySelector('#refresh').disabled")
         # A corrupt page must prevent the entire bundle from being committed.
         page.wait_for_timeout(500)
         previous=page.locator('#image').get_attribute('src')
@@ -109,10 +107,13 @@ def main():
         assert page.locator('#image').get_attribute('src')==previous
         corrupt[0]=False;offline[0]=True
         page.locator('#refresh').click()
-        page.wait_for_function("document.querySelector('#message').textContent.indexOf('Cached')!==-1")
+        page.wait_for_function("document.querySelector('#message').textContent.indexOf('Offline')===0")
         count=len(calls);page.locator('#previous').click()
         assert len(calls)==count
         assert calls.count('enter')>=2
+        assert 'heartbeat' not in calls
+        page.clock.fast_forward(9000)
+        assert not page.locator('#message').is_visible()
         assert not errors, errors
         folder=ROOT/'.tools/app-tests';folder.mkdir(parents=True,exist_ok=True)
         page.screenshot(path=str(folder/'app.png'))

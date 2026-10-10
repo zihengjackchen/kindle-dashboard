@@ -33,6 +33,8 @@ NAS browser. Amazon Special Offers and its normal lockscreen remain untouched.
 - App refresh timer: 60 minutes normally, four hours at night or low battery;
   configurable in the editor. Optional timed page rotation is off initially.
 - Frontlight level saved and set to zero on entry; previous level restored on exit.
+- Native event supervision with a 30-minute fallback audit; no browser heartbeat.
+- Refresh progress stays in the button; no permanent status row. Plain launch feedback.
 - Authenticated downloads, bounded PNG validation, decode-before-commit all-page cache,
   retained stale images on failure, bounded logs, Stop and USB kill switch.
 - KUAL manual framebuffer refresh and cached navigation remain fallback tools.

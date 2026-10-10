@@ -1,10 +1,14 @@
 /* ES5 for Kindle Mesquite. No remote scripts, animation or persistent connections. */
 (function () {
     'use strict';
-    var config = window.DASHBOARD, active = true, busy = false, index = 0, timer, heartbeat, rotate, resizeTimer, battery=null, charging=false, initialized=false, imageWidth=0, imageHeight=0, lastRenderSize='', pages={}, stale=true;
+    var config = window.DASHBOARD, active = true, busy = false, index = 0, timer, noticeTimer, rotate, resizeTimer, battery=null, charging=false, initialized=false, imageWidth=0, imageHeight=0, lastRenderSize='', pages={}, stale=true;
     var settings = {pages: [{id:'overview',name:'Dashboard'},{id:'weather',name:'Weather'},{id:'markets-1',name:'Markets 1'},{id:'markets-2',name:'Markets 2'},{id:'nas',name:'Home server'}],refresh_minutes:60,night_minutes:240,rotation_minutes:0};
     function el(id) { return document.getElementById(id); }
-    function message(text) { el('message').textContent = text; }
+    function message(text) {
+        clearTimeout(noticeTimer);
+        el('message').textContent=text; el('message').style.display=text?'block':'none';
+        if (text) noticeTimer=setTimeout(function(){el('message').style.display='none';},8000);
+    }
     function canvasSize() {
         // Mesquite's viewport already excludes native chrome. Measure only
         // the image container; never subtract an assumed native banner height.
@@ -65,7 +69,7 @@
         if (!image) { message('No cached page. Tap Refresh.'); return; }
         imageWidth=image.width; imageHeight=image.height; fitImage();
         el('image').src=image.url; el('image').style.display='inline'; el('empty').style.display='none';
-        message(page.name+(stale?' \u00b7 Cached':''));
+        message('');
     }
     function validateBundle(value, fresh, done) {
         var next={}, seen={}, n=0, list=value && value.settings && value.settings.pages;
@@ -111,11 +115,11 @@
     function load(fetch) {
         if (busy || !active) return;
         busy=true;
-        if (fetch) message('Updating all pages...');
+        el('refresh').textContent=fetch?'Refreshing...':'Loading...'; el('refresh').disabled=true;
         request(fetch?'bundle':'cached-bundle',false,function(error,value,xhr) {
             if (!active) { busy=false; return; }
             function finish(error) {
-                busy=false;
+                busy=false; el('refresh').textContent='Refresh'; el('refresh').disabled=false;
                 if (error) { stale=true; message(error); }
                 if (!fetch) load(true); else schedule();
             }
@@ -135,7 +139,9 @@
                     for(j=0;j<settings.pages.length;j++) if(settings.pages[j].id===selected) index=j;
                     battery=value.battery; charging=!!value.charging;
                     stale=!fetch || xhr.getResponseHeader('X-Dashboard-Stale')==='1';
-                    showPage(); finish(null);
+                    showPage();
+                    if (fetch && stale) message('Offline. Showing saved dashboards.');
+                    finish(null);
                 }
                 // The shell atomically commits the entire bundle only after every
                 // PNG decoded. A damaged page never replaces any working page.
@@ -151,13 +157,13 @@
         clearTimeout(rotate);
         if (active && settings.rotation_minutes>0) rotate=setTimeout(function(){navigate(1);},Math.max(1,settings.rotation_minutes)*60000);
     }
-    function pause() { active=false; clearTimeout(timer); clearTimeout(rotate); clearTimeout(resizeTimer); clearInterval(heartbeat); }
+    function pause() { active=false; clearTimeout(timer); clearTimeout(rotate); clearTimeout(resizeTimer); }
     function enter() {
         var resumed=!active;
         active=true;
         request('enter',false,function () {});
-        clearInterval(heartbeat);
-        heartbeat=setInterval(function () { if (active) request('heartbeat',false,function (error) { if(error) {pause();message(error);} }); },20000);
+
+
         schedule();
         if (resumed && initialized) load(false);
     }

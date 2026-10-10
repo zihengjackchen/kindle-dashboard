@@ -73,11 +73,13 @@ a successful on-device launch remains required.
 Previous/Next switch cached pages immediately without any network request. Refresh
 fetches every configured page in one bundle. The top native **X** returns Home;
 the session supervisor then restores light/power settings and stops the bridge.
-The session supervisor detects leaving the app through `appmgrd.activeApp` when
-available; otherwise lifecycle callbacks and a 90-second heartbeat lease stop it.
+The supervisor waits for native app/power events, checking `appmgrd.activeApp`
+when they arrive. There is no browser heartbeat or ten-second polling loop. A
+one-time 30-second startup check catches failed launches; the fallback audit runs
+every 30 minutes. Listener failure ends the session and restores normal power.
 Cleanup unloads this app's WebKit instance so reopening gets a fresh session.
-KUAL Stop waits up to 12 seconds for the supervisor's current sleep and cleanup
-to finish; it does not reuse a stopping session.
+KUAL Stop signals the supervisor directly; blocking event waits and timer children
+are interruptible. The existing bounded cleanup wait prevents a reopening race.
 
 The web editor sets page names/order, refresh interval (60 minutes by default),
 night interval (240 minutes, 22:00–07:00 on the Kindle clock), and optional page
@@ -98,9 +100,20 @@ brightness and the native level. No arbitrary sysfs discovery writes occur.
 
 `KEEP_AWAKE_PLUGGED=0` is deliberately the shipped default. After observing the
 exact properties on the device, `1` enables a reversible foreground-only request
-through `powerd.preventScreenSaver`, while `powerd.isUsbConnected` reports external
-power. It saves the old value and releases it on unplug, leaving the app, native
-sleep, Close, Stop, kill switch or expired session. `activeApp` must match this app
+through `powerd.preventScreenSaver`, while external power is detected. Firmware
+5.16.2.1.1 lacks `powerd.isUsbConnected`; set `VERIFIED_EXTERNAL_POWER_PATH` to a
+plug/unplug-tested sysfs indicator instead. On the inspected device,
+`max77696-charger/online` is 1 even with USB `present` at 0: do not use that online
+field. The candidate `/sys/class/power_supply/max77696-uic/present` still needs a
+physical plug/unplug check before enabling the installed option.
+
+The supervisor watches appmgrd, powerd and HAL events. It releases its inhibitor
+on unplug, leaving the app, manual power-button events, native sleep, Stop or kill
+switch detection. An inhibitor already held by another program is not claimed or
+reset. A 30-minute audit is only a fallback; normal exit/unplug handling is event
+based. Manual sleep is not undone automatically; wake lifecycle/events restore
+normal dashboard operation. The power button and unplug sequence require physical
+acceptance with KOSSH stopped, because KOSSH itself inhibits sleep. `activeApp` must match this app
 and `powerd.state` must be `active`; unknown values fail closed. This controls an
 open app session; it does not unload ads, draw on the lockscreen, or modify Special
 Offers. It uses more power than native suspend. Do not advertise 24/7 visibility
@@ -119,14 +132,17 @@ as the authenticated `X-Dashboard-Viewport: WIDTHxHEIGHT` loopback header. The
 shell accepts only dimensions 320-2560 and passes them to the NAS using the
 existing `width`/`height` query parameters. Thus Pillow lays out the page at the
 app's aspect ratio; it is not a full-panel wallpaper squeezed into the window.
-On this Paperwhite the measured image area is **1056 x 1140**, versus the panel's
+On this Paperwhite the measured image area is **1056 x 1162**, versus the panel's
 1072 x 1448. Those numbers are observed, not hardcoded. Resize events trigger a
 new render only when geometry changes. Legacy Mesquite's misleading pixel-density
 multiplier is ignored because its CSS coordinates already match panel pixels.
 
 The three app controls sit at the top: **Previous / Refresh / Next**. Use the
 Kindle's native **X** in the title bar to exit. The dashboard fills the area below
-those controls and the short status line; nothing is reserved at the bottom.
+those controls; no status row or bottom row is reserved. The Refresh button shows
+progress while fetching, then returns to its normal label. Errors are temporary
+8-second overlays. A plain opening message is shown during launch and a white
+loading view appears until cached content is ready.
 
 Each refresh makes **one NAS request** to `/dashboard-bundle.json`, including the
 measured viewport and device telemetry. The JSON response contains every configured
@@ -144,7 +160,7 @@ acknowledgement atomically replaces `bundle.json`. A damaged image rejects the
 whole update. At most one good and one pending bundle are retained.
 
 Opening the app reads the local bundle first, then attempts a refresh. Failure
-retains all old pages and their original timestamps, with a cached status label.
+retains all old pages and their original timestamps, with a brief offline notice after a failed refresh.
 Older per-page caches are a first-upgrade fallback when no bundle exists. Legacy
 framebuffer KUAL refresh/navigation still use their separate per-page workflow.
 
@@ -162,8 +178,8 @@ shell-command, filesystem, NAS control, or arbitrary URL endpoint.
 1. Use the native **X** in the app's top title bar. KUAL **Stop Dashboard** is a fallback.
 2. Via SSH: `sh /mnt/us/extensions/dashboard/stop.sh`.
 3. Via USB: create an empty `/mnt/us/dashboard-disable` (USB-root
-   `dashboard-disable`). The session exits on its next supervisor tick. If asleep,
-   it processes this after wake. Remove the file only after recovery.
+   `dashboard-disable`). The session exits on the next native event or fallback audit (up to 30 minutes).
+   Use Stop/SSH for immediate recovery. If asleep, it processes this after wake. Remove the file only after recovery.
 4. If a crashed process left `state/app.pid`/`state/app.lock`, run Stop first.
    Check that the recorded PID is not a running `app-session.sh` before removing
    these stale files/directories. Never signal an arbitrary saved PID.

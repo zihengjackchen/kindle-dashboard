@@ -21,6 +21,11 @@ it does not embed Wordle or KOReader. The owner reports KWordle working on firmw
 4. A reversible entry is registered for `org.kindledashboard.app` in
    `/var/local/appreg.db`. Its manifest lives in
    `/var/local/mesquite/org.kindledashboard.app/`. No boot or lockscreen files change.
+   Mesquite runs as `framework`: the app directory belongs to that user with
+   mode 0755, and UI assets have mode 0644. The generated `session.js` is also
+   installed there because this firmware resolves script assets locally even
+   with an HTTP content URL. It contains only the short-lived loopback session
+   key; NAS credentials remain in the shell client.
 
 ### HTTP helper for legacy ARM Kindles
 
@@ -62,6 +67,9 @@ the current page. Close revokes the local session, restores light/power settings
 and asks the native app manager to open Home. The system chromebar also has Close.
 The session supervisor detects leaving the app through `appmgrd.activeApp` when
 available; otherwise lifecycle callbacks and a 90-second heartbeat lease stop it.
+Cleanup unloads this app's WebKit instance so reopening gets a fresh session.
+KUAL Stop waits up to 12 seconds for the supervisor's current sleep and cleanup
+to finish; it does not reuse a stopping session.
 
 The web editor sets page names/order, refresh interval (60 minutes by default),
 night interval (240 minutes, 22:00–07:00 on the Kindle clock), and optional page
@@ -99,7 +107,9 @@ pressing the power button. A screenshot/photo cannot establish the power state.
 
 A compatible BusyBox HTTP daemon binds **127.0.0.1:18765 only**, while the app is
 open. The app manifest points at an unguessable session directory on that origin,
-avoiding file-URL CORS problems in old WebKit. No CORS grant is sent. CGI actions
+serving the app assets. This device also resolves JavaScript from its native app
+directory; authenticated loopback requests were verified on 5.16.2.1.1.
+No CORS grant is sent. CGI actions
 require POST plus a random per-session header; NAS credentials never enter the
 HTML/JavaScript. Only fixed page IDs and actions are accepted. There is no generic
 shell-command, filesystem, NAS control, or arbitrary URL endpoint.

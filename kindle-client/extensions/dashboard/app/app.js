@@ -5,6 +5,10 @@
     var settings = {pages: [{id:'overview',name:'Dashboard'},{id:'weather',name:'Weather'},{id:'markets-1',name:'Markets 1'},{id:'markets-2',name:'Markets 2'},{id:'nas',name:'Home server'}],refresh_minutes:60,night_minutes:240,rotation_minutes:0};
     function el(id) { return document.getElementById(id); }
     function message(text) { el('message').textContent = text; }
+    if (!config || !config.base || !config.key) {
+        el('empty').textContent = 'Dashboard session setup is missing. Close and reopen.';
+        return;
+    }
     function request(action, binary, done) {
         var xhr = new XMLHttpRequest(), finished = false;
         var deadline = setTimeout(function () { xhr.abort(); finish('Bridge unavailable. Close and reopen Dashboard.'); }, 40000);

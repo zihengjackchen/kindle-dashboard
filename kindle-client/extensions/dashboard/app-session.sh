@@ -11,6 +11,8 @@ app_cleanup() {
     app_power_release
     app_light_restore
     [ -z "$HTTP_PID" ] || kill "$HTTP_PID" 2>/dev/null || :
+    # Discard the native WebKit instance: its in-memory session key is now stale.
+    probe lipc-set-prop com.lab126.appmgrd stop app://org.kindledashboard.app >/dev/null || :
     rm -f "$STATE_DIR/app.pid" "$STATE_DIR/app-key" "$STATE_DIR/app-heartbeat" "$STATE_DIR/active"
     rm -f "$STATE_DIR/web/$APP_KEY/index.html" "$STATE_DIR/web/$APP_KEY/app.js" "$STATE_DIR/web/$APP_KEY/session.js"
     rmdir "$STATE_DIR/web/$APP_KEY" 2>/dev/null || :

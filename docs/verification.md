@@ -178,3 +178,32 @@ USB storage access cannot execute Kindle programs. Dynamic loading, CGI bridge
 self-check and Mesquite app opening still require safely ejecting and launching
 on the physical Kindle. New startup/probe logs will expose the next failure if
 another firmware incompatibility exists. NAS software was unchanged.
+
+## Live Kindle startup repair - October 9, 2026
+
+Connected over the owner's KOSSH service to the ARMv7 Paperwhite. The native
+Mesquite log reported `Error opening file: Permission denied`: the launcher's
+private umask had made its native app directory and assets root-only. Mesquite
+runs as `framework` (uid 9000 on this device). The launcher now assigns only its
+own native app directory to that user and sets directory/file modes 0755/0644.
+
+Once readable, the UI revealed a missing session bootstrap. This firmware loads
+script assets from the native app directory even with an HTTP content URL.
+Copying generated `session.js` there enabled authenticated UI requests. NAS
+credentials are never included in that file. Added a visible missing-bootstrap
+error and distinguished native launch acceptance from a real UI connection.
+
+A stop/reopen race also surfaced: sh can defer TERM during the supervisor's
+10-second sleep. Stop now waits for owned-process cleanup, and cleanup unloads
+this app's native WebKit instance so it cannot retain a revoked session key.
+
+Verified on the physical device: native app opening, browser connection,
+HTTP 200 from the NAS, PNG validation at 1072x1448, decoded-image cache commit,
+and framebuffer capture showing weather, stocks, NAS, Backblaze and Kindle
+widgets. Stop restored the prior frontlight level; a fresh launch set LIPC level
+zero and fetched another image successfully. True LED-off, overnight behavior,
+and timed refresh on hardware remain separate acceptance checks.
+
+Eleven bridge/power/helper tests and ShellCheck passed. Browser tests passed for
+navigation, refresh timers, lifecycle and Close, plus the missing-bootstrap case.
+The private and public USB ZIPs were rebuilt. NAS software was unchanged.

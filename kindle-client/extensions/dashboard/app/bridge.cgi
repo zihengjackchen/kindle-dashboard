@@ -15,6 +15,7 @@ case "$QUERY_STRING" in
         respond '{"ok":true}' ;;
     enter)
         date +%s > "$STATE_DIR/app-heartbeat"
+        log 'Dashboard UI connected to local bridge'
         frontlight_off >/dev/null 2>&1 || :
         respond '{"ok":true}' ;;
     close)

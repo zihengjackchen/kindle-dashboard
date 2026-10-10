@@ -34,6 +34,11 @@ fi
 stop_listener
 APP_ROOT=/var/local/mesquite/org.kindledashboard.app
 mkdir -p "$APP_ROOT" || exit 1
+# Mesquite runs as framework, while launchers run as root with umask 077.
+# Only native UI assets are shared; NAS credentials stay in the shell client.
+native_uid=$(id -u framework) && native_gid=$(id -g framework) || exit 1
+chown "$native_uid:$native_gid" "$APP_ROOT" || exit 1
+chmod 0755 "$APP_ROOT" || exit 1
 cp "$DASHBOARD_DIR/app/index.html" "$DASHBOARD_DIR/app/app.js" "$DASHBOARD_DIR/app/config.xml" "$APP_ROOT/" || exit 1
 # Registration is scoped to this application. No framework/lockscreen patches.
 sqlite3 /var/local/appreg.db <<'SQL' || exit 1
@@ -54,8 +59,12 @@ mkdir -p "$STATE_DIR/web/cgi-bin" || exit 1
 mkdir -p "$STATE_DIR/web/$SESSION_KEY" || exit 1
 cp "$DASHBOARD_DIR/app/index.html" "$DASHBOARD_DIR/app/app.js" "$STATE_DIR/web/$SESSION_KEY/" || exit 1
 printf 'window.DASHBOARD={base:"http://127.0.0.1:%s",key:"%s"};\n' "$APP_PORT" "$SESSION_KEY" > "$STATE_DIR/web/$SESSION_KEY/session.js"
+# Mesquite on 5.16.2.1.1 resolves script assets from the native app directory,
+# even with an HTTP content URL. Keep the per-launch settings alongside app.js.
+cp "$STATE_DIR/web/$SESSION_KEY/session.js" "$APP_ROOT/session.js" || exit 1
 # Same-origin local HTTP avoids old WebKit file:// CORS restrictions.
 sed "s|src=\"index.html\"|src=\"http://127.0.0.1:$APP_PORT/$SESSION_KEY/index.html\"|" "$DASHBOARD_DIR/app/config.xml" > "$APP_ROOT/config.xml"
+chmod 0644 "$APP_ROOT/config.xml" "$APP_ROOT/index.html" "$APP_ROOT/app.js" "$APP_ROOT/session.js" || exit 1
 cp "$DASHBOARD_DIR/app/bridge.cgi" "$STATE_DIR/web/cgi-bin/action"
 chmod 700 "$STATE_DIR/web/cgi-bin/action"
 export DASHBOARD_DIR
@@ -68,4 +77,4 @@ if ! curl -q -fsS --max-time 5 -X POST --header "X-Dashboard-Session: $SESSION_K
     exit 1
 fi
 lipc-set-prop com.lab126.appmgrd start app://org.kindledashboard.app || { /bin/sh "$DASHBOARD_DIR/stop.sh"; exit 1; }
-log 'Launched Dashboard library app'
+log 'Native launch request accepted; waiting for Dashboard UI connection'

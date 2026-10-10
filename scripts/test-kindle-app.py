@@ -15,6 +15,7 @@ APP=ROOT/'kindle-client/extensions/dashboard/app'
 
 def main():
     calls=[]
+    session_available=[True]
     out=BytesIO(); Image.new('L',(600,800),240).save(out,format='PNG'); png=out.getvalue()
     with sync_playwright() as pw:
         options={'headless':True}
@@ -34,7 +35,7 @@ def main():
                 elif action.startswith(('fetch=','cached=')):
                     request.fulfill(body=png,headers={'Content-Type':'image/png','X-Dashboard-Revision':'3000000000','X-Dashboard-Battery':'90'})
                 else: request.fulfill(json={'ok':True})
-            elif path=='/session.js': request.fulfill(body='window.DASHBOARD={base:"http://kindle.test",key:"test"}',content_type='application/javascript')
+            elif path=='/session.js': request.fulfill(body='window.DASHBOARD={base:"http://kindle.test",key:"test"}' if session_available[0] else '',content_type='application/javascript')
             else:
                 name='index.html' if path=='/' else path[1:]
                 request.fulfill(body=(APP/name).read_text(encoding='utf-8'),content_type='application/javascript' if name.endswith('.js') else 'text/html')
@@ -64,6 +65,12 @@ def main():
         assert not errors, errors
         folder=ROOT/'.tools/app-tests';folder.mkdir(parents=True,exist_ok=True)
         page.screenshot(path=str(folder/'app.png'))
+        # Old Mesquite may resolve session.js from the native app directory.
+        # A missing bootstrap must produce a visible error, not an exception.
+        session_available[0]=False
+        page.reload()
+        assert 'session setup is missing' in page.locator('#empty').inner_text()
+        assert not errors, errors
         browser.close()
     print('Kindle app browser checks passed: entry, image decode/commit, navigation, auto refresh, pause/resume, Close.')
 

@@ -55,3 +55,12 @@ def test_close_revokes_session(setup):
     assert b'"ok":true' in call(env,'close')[1]
     assert not (data/'state/app-key').exists()
     assert '403' in call(env,'fetch=overview')[0]
+
+
+def test_ui_entry_is_logged_only_after_authenticated_browser_call(setup):
+    env, data = session(setup)
+    assert '403' in call(env, 'enter', key='wrong')[0]
+    logfile = data / 'logs/dashboard.log'
+    assert not logfile.exists() or 'Dashboard UI connected' not in logfile.read_text()
+    assert b'"ok":true' in call(env, 'enter')[1]
+    assert 'Dashboard UI connected to local bridge' in logfile.read_text()

@@ -11,12 +11,21 @@ if [ -f "$STATE_DIR/app.pid" ]; then
     app_pid=$(read_first "$STATE_DIR/app.pid")
     if is_uint "$app_pid" && [ -r "/proc/$app_pid/cmdline" ] && tr '\000' '\n' < "/proc/$app_pid/cmdline" | grep -F -x "$DASHBOARD_DIR/app-session.sh" >/dev/null; then
         kill -TERM "$app_pid" 2>/dev/null || :
+        # POSIX sh may defer TERM until its current sleep finishes. Wait for
+        # cleanup so an immediate reopen cannot reuse a revoked session.
+        stop_wait=0
+        while [ -r "/proc/$app_pid/cmdline" ] && tr '\000' '\n' < "/proc/$app_pid/cmdline" | grep -F -x "$DASHBOARD_DIR/app-session.sh" >/dev/null; do
+            [ "$stop_wait" -lt 12 ] || { fail 'App is still stopping; retry shortly'; exit 1; }
+            sleep 1
+            stop_wait=$((stop_wait + 1))
+        done
     else
         rm -f "$STATE_DIR/app.pid" "$STATE_DIR/app-heartbeat"
         rmdir "$STATE_DIR/app.lock" 2>/dev/null || :
     fi
     probe lipc-set-prop com.lab126.appmgrd start app://com.lab126.booklet.home >/dev/null || :
 fi
+probe lipc-set-prop com.lab126.appmgrd stop app://org.kindledashboard.app >/dev/null || :
 # Stop always works with the kill switch present or automation flags misconfigured.
 rm -f "$STATE_DIR/active"
 stop_listener

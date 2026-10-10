@@ -37,13 +37,11 @@ NAS browser. Amazon Special Offers and its normal lockscreen remain untouched.
 
 ## Hardware status and power boundaries
 
-The owner confirms KWordle works on firmware **5.16.2.1.1**. Earlier framebuffer
-refresh and Stop were tested on a 1072 × 1448 Paperwhite. The new Mesquite app,
-its local HTTP bridge and lifecycle need a physical-device acceptance test.
-
-**The USB Kindle is currently disconnected. The new client is packaged, not
-installed or hardware-verified.** Browser/shell tests do not establish Kindle API
-compatibility, true light-off, or overnight power consumption.
+Installed and tested on a **1072 × 1448 Paperwhite, firmware 5.16.2.1.1**.
+The owner confirmed document launch, Next, Close, and reopening after the tap
+crash and launcher handoff fixes. The local bridge fetches and displays NAS images
+at the measured app canvas size. True light-off, overnight power consumption,
+and continuous-display behavior still require hardware measurement.
 
 Older Paperwhites can remain faintly lit at native brightness zero. True off uses
 only a diagnostic-confirmed brightness path. Plugged-in continuous-display support
@@ -116,6 +114,9 @@ DejaVu fonts. Examples under `docs/previews/` are explicitly labeled sample data
 
 - Launch fails: run KUAL Show Diagnostics and read `logs/dashboard.log`; check
   Mesquite/sqlite3/curl and BusyBox httpd CGI support.
+- Allow a few seconds after selecting Dashboard: the launcher must return before
+  the native app starts. See [crash troubleshooting](docs/kindle-app.md#crash-troubleshooting)
+  if tapping crashes the app or a launch immediately returns Home.
 - Refresh paused: inspect `appmgrd.activeApp` and `powerd.state` in the diagnostic
   report; do not bypass the lockscreen/foreground guard.
 - Old image: check Wi-Fi, NAS reachability, bearer token and source freshness in

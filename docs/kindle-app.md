@@ -165,3 +165,23 @@ The bridge self-check, browser tests and shell mocks do not substitute for Kindl
 hardware testing: firmware API availability, native app manifest handling, full
 refresh/ghosting behavior, true light-off, and continuous-display power behavior
 remain explicit acceptance checks.
+
+## Crash troubleshooting
+
+On firmware 5.16.2.1.1, an earlier manifest enabled native tap recognition without
+initializing the `gestures` API. The device logged `EventsHandler::dispatchTapEvent`
+followed by a Mesquite segmentation fault. The manifest now declares that API,
+as the installed KWordle does. The owner verified Next, Close, and reopening after
+this change. Ordinary browser click tests cannot reproduce this native crash.
+
+A separate document-launch failure appeared as `CancellingLOADOperationForApp`:
+shell integration returned Home while Dashboard was loading. Both launch entry
+points now detach the worker, wait three seconds, and wait up to ten additional
+seconds for shell integration/KUAL to leave the foreground before starting the UI.
+The worker rechecks the kill switch before making changes. There is no retry loop.
+
+If another crash occurs, preserve the timestamped `mesquite_*.core` in the USB root
+and its matching crash report under `documents/`. These are Kindle-generated files;
+they may contain device/session data and should not be committed or posted publicly.
+Run Stop Dashboard before reopening after a crash. Dashboard's startup and activity
+logs are in `extensions/dashboard/logs/`.

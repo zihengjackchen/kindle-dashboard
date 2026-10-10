@@ -62,7 +62,7 @@ def test_launch_failure_leaves_notice_and_no_session(setup):
     helper(data / "stock/busybox", "httpd: applet not found")
     body = (f'PATH="$(cd "{data.as_posix()}/stock" && pwd):$PATH"; export PATH; '
             f'BUSYBOX_BIN="{data.as_posix()}/stock/busybox"; export BUSYBOX_BIN; '
-            f'exec sh "{(EXT / "app-launch.sh").as_posix()}"')
+            f'exec sh "{(EXT / "app-launch.sh").as_posix()}" --after-launcher')
     result = subprocess.run([SH, "-c", body], env=env, capture_output=True, text=True, timeout=15)
     assert result.returncode != 0
     log = (data / "logs/dashboard.log").read_text()

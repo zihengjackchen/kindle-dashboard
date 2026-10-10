@@ -3,6 +3,28 @@
 DASHBOARD_DIR=$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd) || exit 1
 . "$DASHBOARD_DIR/lib/client.sh"
 . "$DASHBOARD_DIR/lib/httpd.sh"
+# The document shell integration returns Home when its child exits. Starting
+# Mesquite before that transition lets appmgr cancel the new application's load.
+# Detach first so both document and KUAL launchers can finish their lifecycle.
+if [ "${1:-}" != '--after-launcher' ]; then
+    check_enabled || exit 1
+    nohup /bin/sh "$DASHBOARD_DIR/app-launch.sh" --after-launcher </dev/null >/dev/null 2>&1 &
+    log 'Dashboard launch queued; waiting for launcher to return'
+    exit 0
+fi
+sleep 3
+launch_wait=0
+while [ "$launch_wait" -lt 10 ]; do
+    launch_app=$(probe lipc-get-prop com.lab126.appmgrd activeApp)
+    case "$launch_app" in
+        *shell_integration*|*kual*|*KUAL*) sleep 1; launch_wait=$((launch_wait + 1)) ;;
+        *) break ;;
+    esac
+done
+case "$launch_app" in *shell_integration*|*kual*|*KUAL*)
+    log 'ERROR launcher did not return; Dashboard launch cancelled'
+    exit 1 ;;
+esac
 # Keep failures visible after KUAL closes, and retain bounded startup stderr.
 startup_exit() {
     startup_status=$?

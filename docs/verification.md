@@ -228,3 +228,21 @@ canvas fill, control clearance, window resize and misleading native density.
 The bridge suite passed 12 tests; a focused bridge/manual-download regression run
 passed 16 tests. ShellCheck passed. Existing NAS rendering supports these dimensions
 without a server update.
+
+
+## Editor and layout update, 2026-10-09
+
+- Full local suite: 155 passed, 1 skipped. Existing FastAPI/httpx deprecation warning remains.
+- Edge browser checks pass for auth, draft/save, widget drag/hide, ticker selection,
+  per-page fields, import/export, mobile width, canvas size, preview zoom, page
+  enable/order controls, last-page protection and page-only reset preservation.
+- Built and deployed the dashboard service on the NAS. Collector configuration and
+  the saved layout were not changed. Authenticated reads confirmed saved preferences
+  exactly match the pre-deployment snapshot, including the 22-symbol watchlist.
+- Deployed HTML/JS matched local files. Four live previews decoded as grayscale PNGs
+  at 1056 x 1162; overview, weather and NAS images were visually inspected.
+- Live browser connected successfully and selected the reported app canvas. No
+  browser errors or horizontal page overflow at a 390-pixel mobile viewport.
+- No Kindle client reinstall is required: layouts arrive on the next Refresh.
+  This change does not enable keep-awake or establish a battery-life estimate.
+- Server source rollback archive: /mnt/Main/kindle-dashboard/editor-before-20261009.tar.gz.

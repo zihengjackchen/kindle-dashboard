@@ -57,6 +57,13 @@ def main():
                 page.wait_for_function("!document.querySelector('#save').disabled")
                 assert page.locator("#widgets .widget").count() == 5
                 assert page.locator("#tickers input:checked").count() == 12
+                assert page.locator("#size").input_value() == "1056x1162"
+                page.locator("#zoom").click()
+                assert page.locator(".device-stage").evaluate("n=>n.classList.contains('actual')")
+                page.locator("#zoom").click()
+                page.get_by_role("button", name="Move Weather page up", exact=True).click()
+                page.locator(".page-item[data-page=nas] input").uncheck()
+                assert page.evaluate("draft.page_order") == ['weather', 'overview', 'markets-1', 'markets-2']
                 page.locator("#title").fill("My quiet morning")
                 page.locator("#add-widget").select_option("notes")
                 page.locator("#add").click()
@@ -73,6 +80,7 @@ def main():
                 assert saved["title"] == "My quiet morning"
                 assert saved["widgets"][0]["id"] == "markets"
                 assert "GOOG" not in saved["tickers"]
+                assert saved['page_order'] == ['weather', 'overview', 'markets-1', 'markets-2']
                 assert not (Path(temp)/"contacts.json").exists()
                 with page.expect_download() as download:
                     page.locator("#export").click()
@@ -117,6 +125,19 @@ def main():
                 assert saved['pages']['nas']['title']=='Server details'
                 assert 'uptime' in saved['pages']['nas']['widgets'][0]['fields']
                 assert saved['title']=='My quiet morning'
+                # Reset applies to this page's arrangement only, and remains a draft.
+                page.get_by_role("button", name="Hide Backblaze backup", exact=True).click()
+                page.locator('#page-reset').click()
+                assert page.locator('.widget[data-id=backup]').count() == 1
+                assert page.evaluate('draft.title') == 'My quiet morning'
+                assert page.evaluate('draft.page_order') == saved['page_order']
+                assert json.loads((Path(temp)/'layout.json').read_text()) == saved
+                # Every page cannot be disabled accidentally.
+                for name in ('weather', 'markets-1', 'markets-2'):
+                    page.locator('.page-item[data-page="'+name+'"] input').uncheck()
+                assert page.locator('.page-item[data-page=overview] input').is_disabled()
+                page.locator('#discard').click()
+                page.wait_for_function("!document.querySelector('#save').disabled")
                 assert not errors, errors
                 browser.close()
                 print("Editor browser checks passed: auth, reorder/hide, tickers, preview, save, export/import, reload, mobile.")

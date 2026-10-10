@@ -22,7 +22,7 @@ class Card:
         self.c = canvas
         self.x, self.y, self.w, self.h = bounds
         self.pad = min(22 * canvas.scale, self.w * .045)
-        self.scale = min(canvas.scale, self.w / 480, self.h / {"small": 220, "medium": 340, "large": 600}[size])
+        self.scale = min(canvas.width / 1236, canvas.height / 1400, self.w / 480, self.h / 190)
         self.type_scale = 1 if density == "compact" else 1.12
         canvas.draw.rounded_rectangle((self.x, self.y, self.x+self.w, self.y+self.h),
                                       radius=max(3, int(22 * canvas.scale)), fill=250, outline=0, width=1)
@@ -54,12 +54,30 @@ def selected(widget):
 
 def lines(card, title, values):
     card.text(title, 0, 0, 23, True)
-    step = .80/max(3, len(values))
+    if card.w > card.c.width*.65 and len(values) >= 3:
+        columns = 3 if len(values) >= 9 or len(values) == 3 else 2
+        count = ceil(len(values)/columns)
+        step = .82/count
+        factor = min(1, step*(card.h-2*card.pad)/(88*card.scale*card.type_scale))
+        for i, (label, value) in enumerate(values):
+            row, col = divmod(i, columns)
+            x, y = col/columns, .14+row*step
+            card.text(label, x, y, 23*factor, shade=65, width=.92/columns)
+            card.text(value, x, y+step*.36, 34*factor, True, width=.92/columns)
+        return
+    columns = 1
+    count = max(1, ceil(len(values)/columns))
+    # Bound line spacing instead of spreading a handful of metrics down a whole screen.
+    step = min(.80/max(3, count), 48*card.scale/(card.h-2*card.pad))
+    start = max(.10, 42*card.scale/(card.h-2*card.pad))
     for i, (label, value) in enumerate(values):
-        y = .16 + i*step
-        size = min(29, 145/max(5, len(values)))
-        card.text(label, 0, y, size, shade=65, width=.48)
-        card.text(value, 1, y, size, True, right=True, width=.49)
+        col, row = divmod(i, count)
+        x = col*.53
+        width = .47 if columns == 2 else 1
+        y = start + row*step
+        size = min(29, step*(card.h-2*card.pad)/(card.scale*1.5))
+        card.text(label, x, y, size, shade=65, width=width*.49)
+        card.text(value, x+width, y, size, True, right=True, width=width*.49)
 
 
 def show(value, suffix=""):
@@ -80,11 +98,34 @@ def draw_weather(card, snap, now, units, fields):
               "feels_like":f"Feels like {temp(w.feels_like)}" if w.feels_like is not None else "Feels like —",
               "precipitation":f"Rain {w.precipitation_percent}%",
               "forecast":"   ".join(f"{d.day[:3]} {temp(d.high)}" for d in w.forecast[:2])}
+    if card.w > card.c.width*.65 and card.h > 400*card.scale:
+        # A dedicated weather page uses a hero and forecast tiles, not six stretched lines.
+        y = .09
+        for key in fields:
+            if key == "forecast":
+                continue
+            card.text(values[key], 0, y, 76 if key == "temperature" else 29,
+                      key in ("temperature", "condition"), width=1)
+            y += .13 if key == "temperature" else .065
+        if "forecast" in fields:
+            y = max(.58, y+.04)
+            card.rule(y-.03)
+            forecasts = w.forecast[:4]
+            for i, day in enumerate(forecasts):
+                width = 1/max(1, len(forecasts))
+                x = i*width
+                card.text(day.day, x, y, 27, True, width=width*.94)
+                card.text(day.condition, x, y+.075, 24, width=width*.94)
+                card.text(temp(day.high), x, y+.15, 28, True, width=width*.94)
+                card.text(temp(day.low), x, y+.22, 24, shade=65, width=width*.94)
+            if not forecasts:
+                card.text("Forecast unavailable", 0, y, 26)
+        return
     y = .13
     # Give the temperature more room; field toggles reclaim the remaining space.
     weight = len(fields)+1.2*int("temperature" in fields)
     for key in fields:
-        card.text(values[key], 0, y, 48 if key == "temperature" else 24,
+        card.text(values[key], 0, y, 46 if key == "temperature" else 23,
                   key in ("temperature", "condition"), width=1)
         y += .79/max(1,weight)*(2.2 if key == "temperature" else 1)
 
@@ -95,7 +136,7 @@ def draw_markets(card, snap, now, tickers, market_columns, fields):
     columns = market_columns if card.w > card.c.width*.65 else 1
     count = ceil(len(tickers)/columns)
     step = .87/count
-    factor = min(1, 10/count)
+    factor = min(1, step*(card.h-2*card.pad)/(68*card.scale*card.type_scale))
     for i, symbol in enumerate(tickers):
         col,row = divmod(i,count)
         width = (1-.045*(columns-1))/columns
@@ -117,7 +158,9 @@ def draw_markets(card, snap, now, tickers, market_columns, fields):
 def draw_nas(card, snap, now, fields):
     n = snap.nas
     labels={"pool_health":"Pool", "used_percent":"Storage used", "cpu_percent":"CPU", "memory_percent":"Memory used", "alerts":"Alerts", "uptime":"Uptime", "version":"TrueNAS"}
-    metric_labels={"memory_available_gib":"RAM available","memory_total_gib":"RAM total","pool_free_gib":"Pool free","pool_size_gib":"Pool size","cpu_temperature_c":"CPU temperature"}
+    metric_labels={"memory_available_gib":"RAM available","memory_total_gib":"RAM total","pool_free_gib":"Pool free","pool_size_gib":"Pool size","cpu_temperature_c":"CPU temperature",
+                   "network_rx_mbps":"Network down", "network_tx_mbps":"Network up",
+                   "disk_read_mbps":"Disk read", "disk_write_mbps":"Disk write", "cpu_iowait_percent":"I/O wait"}
     values=[]
     for key in fields:
         value=getattr(n,key,None) if n and key in labels else n.metrics.get(key) if n else None
@@ -151,7 +194,9 @@ def draw_device(card,data,now,fields):
             "last_success":datetime.fromtimestamp(data.last_success_epoch,now.tzinfo).strftime("%m/%d %H:%M") if data.last_success_epoch else "—"}
     for key in fields:
         if key not in values: values[key]=show(getattr(data,key,None))
-    lines(card,"KINDLE",[(key.replace("_"," ").capitalize(),values[key]) for key in fields])
+    labels={"rssi":"Wi-Fi signal", "charging":"Power", "frontlight":"Frontlight", "uptime_seconds":"Uptime (s)",
+            "storage_free_mib":"Free space (MiB)", "fetch_seconds":"Download (s)", "fetch_failures":"Fetch failures"}
+    lines(card,"KINDLE",[(labels.get(key,key.replace("_"," ").capitalize()),values[key]) for key in fields])
 
 
 def render_overview(data, settings, snapshot, now, layout):

@@ -109,8 +109,14 @@ class Layout(PageLayout):
     def for_page(self, page):
         if page == "overview": return self
         if page in self.pages: return self.pages[page]
-        widgets = {"weather": [Widget(id="weather", width="full", size="large")],
-                   "nas": [Widget(id="nas", width="full", size="large"), Widget(id="backup", width="full")],
+        widgets = {"weather": [Widget(id="weather", width="full", size="large"),
+                               Widget(id="device", size="small"), Widget(id="nas", size="small")],
+                   "nas": [Widget(id="nas", width="full", size="large", fields=[
+                       "pool_health", "used_percent", "pool_free_gib", "cpu_percent", "cpu_temperature_c",
+                       "memory_available_gib", "network_rx_mbps", "network_tx_mbps", "alerts", "uptime",
+                       "apps_running", "scrub_state"]),
+                           Widget(id="backup", width="full", fields=["state", "last_success", "last_run", "duration", "schedule", "transfer"]),
+                           Widget(id="device", width="full", size="small")],
                    "markets-1": [Widget(id="markets", width="full", size="large")],
                    "markets-2": [Widget(id="markets", width="full", size="large")]}
         cut = (len(self.tickers)+1)//2

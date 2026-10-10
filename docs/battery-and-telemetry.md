@@ -1,11 +1,44 @@
 # Battery measurements and contact telemetry
 
-> Library app update: see [Kindle app](kindle-app.md) and [editor](dashboard-editor.md). The manual KUAL workflow below remains a fallback; its restrictions do not describe the new app timers and touch controls.
+## Current library app: measured capabilities, not a runtime promise
 
-The client reads device state only during existing actions. It never wakes to
-sample, polls a timer, holds a wake lock, or modifies Wi-Fi/frontlight settings.
-Power handling remains native. The optional wake listener blocks on events and
-is gated by a verified device profile.
+The app uses Mesquite/WebKit, a loopback HTTP helper, a supervisor polling every
+10 seconds, and a browser heartbeat every 20 seconds while active. These checks
+do not contact the NAS, but consume CPU and write local heartbeat state. They
+are frozen during real system suspend; they do not provide scheduled wakeups.
+There is no continuous NAS connection, animation, or continuous PNG rendering.
+
+Implemented savings: NAS-side rendering, default hourly refresh, four-hour night
+refresh, at least four-hour refresh below 20% when not charging, cached-image
+fallback without a tight retry loop, foreground checks, and cleanup on exit.
+The app sets the native frontlight level to zero, then restores the previous
+level on exit. True LED-off on this Paperwhite has not been established.
+Wi-Fi remains under the normal Kindle policy; this client does not deliberately
+turn the radio off between image fetches. Automatic page rotation is optional
+and generates additional downloads if enabled.
+
+Deep suspend, RTC alarms and CPU governor changes are **not implemented**.
+`KEEP_AWAKE_PLUGGED=0` remains the default and the installed setting. With normal
+sleep enabled, the Amazon lockscreen may replace the app. This is not yet a
+validated combination of uninterrupted 24/7 visibility and low battery drain.
+
+The October 9 live audit found 100% battery on external power and KOSSH running
+with `preventScreenSaver=1`. KOSSH also redraws its address every three seconds.
+That debugging state is unsuitable for a battery benchmark. The device's raw
+fuel-gauge attributes have inconsistent-looking units, so no runtime is inferred
+from them. Also, `powerd.isUsbConnected` is absent on this firmware: the optional
+plugged-in keep-awake detection needs a verified alternative before enabling it.
+
+No unplugged endurance measurement exists for this app. A continuously awake
+browser should not be assigned the multi-week claims of a suspended display.
+Measure matched 12-24 hour unplugged windows with KOSSH stopped first. If a
+window loses D percentage points over H hours, drain is D/H points per hour;
+100H/D hours is only a linear full-charge extrapolation, not a warranty. Reject
+charging samples and zero-drop windows as insufficient for a lifetime estimate.
+
+The manual KUAL one-shot refresh remains a lighter fallback: it exits after
+drawing. See [Kindle app](kindle-app.md) for the interactive mode and native-sleep
+boundaries. No automatic battery sampler or background measurement job is added.
 
 Image requests carry the existing battery/charging/geometry/model/page fields.
 With `SEND_TELEMETRY=1` (default), these optional fields are also sent:
@@ -57,11 +90,16 @@ Logs rotate at the configured size; `.1` is the preceding file.
 - [alexishida](https://github.com/alexishida/kindle-dashboard): browser preview,
   connection checks and off-device rendering as usability patterns.
 - [1RandomDev](https://github.com/1RandomDev/kindle-smarthome-dashboard): readable
-  weather/metric grouping as visual inspiration; no WAF/WebSocket dependency.
+  weather/metric grouping as visual inspiration. Our app also uses native WAF,
+  but has no persistent WebSocket connection. Its README explicitly reports
+  rapid battery drain from keeping the device awake with a persistent connection.
 - [jstriblet](https://github.com/jstriblet/kindle-wall-display): observed battery,
   bounded failures, stale-image preservation, and explicit recovery discipline.
 
 These are independently implemented ideas. No upstream code was copied. We did
 not adopt framework shutdown, direct kernel suspend, RTC writes, radio resets,
-screensaver inhibition, watchdog respawns or remote self-updates. Hardware-specific
-alarm testing belongs after diagnostics, outside this native-sleep release.
+watchdog respawns or remote self-updates. A foreground-only plugged-in sleep
+inhibitor exists but is disabled and not yet usable on this firmware as noted
+above. Jstriblet's main battery advantage is suspend-to-RAM plus RTC wake; its
+screen takeover also stops the native GUI. Those are materially different from
+our interactive app and cannot be enabled here by copying a sleep command.

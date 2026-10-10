@@ -10,6 +10,12 @@ it does not embed Wordle or KOReader. The owner reports KWordle working on firmw
 1. Extract the configured private client ZIP into the Kindle USB root. Merge both
    `documents/` and `extensions/`; keep your existing `config.local.sh` when using
    the public ZIP. The private ZIP contains the NAS bearer token: do not publish it.
+   `documents/Dashboard.sh` embeds an original grayscale library cover using the
+   scriptlet `# Icon:` field. Regenerate it with `python scripts/build-cover.py`
+   (Pillow and DejaVu Sans or Windows Segoe UI required). Artwork is retained in
+   `docs/assets/dashboard-cover.png`. USB eject normally triggers indexing; over
+   SSH, this device accepts `lipc-set-prop com.lab126.scanner reScanFile
+   /mnt/us/documents/Dashboard.sh` to refresh only this document.
 2. Safely eject. Open **Dashboard** in the library, like KWordle. KUAL's
    **Start Dashboard** launches the same app. Existing Refresh/Next/Previous items
    remain a framebuffer fallback.

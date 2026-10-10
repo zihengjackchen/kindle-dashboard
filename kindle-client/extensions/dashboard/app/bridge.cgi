@@ -9,6 +9,10 @@ respond() { printf 'Content-Type: application/json\r\nCache-Control: no-store\r\
 if [ "$REQUEST_METHOD" != POST ] || [ -z "$HTTP_X_DASHBOARD_SESSION" ] || [ "$HTTP_X_DASHBOARD_SESSION" != "$(read_first "$STATE_DIR/app-key")" ] || disabled; then
     printf 'Status: 403 Forbidden\r\n'; respond '{"error":"Session closed"}'; exit 0
 fi
+# App viewport images must not replace full-panel framebuffer page caches.
+LEGACY_PAGE_CACHE=$CACHE_DIR/pages
+CACHE_DIR=$CACHE_DIR/app
+mkdir -p "$CACHE_DIR/pages" || exit 1
 case "$QUERY_STRING" in
     heartbeat)
         date +%s > "$STATE_DIR/app-heartbeat"
@@ -50,10 +54,20 @@ case "$QUERY_STRING" in
             respond '{"error":"Refresh paused until Dashboard is foreground and Kindle unlocked"}'; exit 0
         fi
         read_device_info
-        # Render at physical size, scale within the app viewport, preserving ratio.
+        if [ -n "$HTTP_X_DASHBOARD_VIEWPORT" ]; then
+            case "$HTTP_X_DASHBOARD_VIEWPORT" in *x*) ;; *) respond '{"error":"Invalid viewport"}'; exit 0 ;; esac
+            viewport_width=${HTTP_X_DASHBOARD_VIEWPORT%x*}
+            viewport_height=${HTTP_X_DASHBOARD_VIEWPORT#*x}
+            if ! valid_dimension "$viewport_width" || ! valid_dimension "$viewport_height"; then
+                respond '{"error":"Invalid viewport"}'; exit 0
+            fi
+            WIDTH=$viewport_width HEIGHT=$viewport_height
+        fi
         if ! valid_dimension "$WIDTH" || ! valid_dimension "$HEIGHT"; then respond '{"error":"Screen size unknown"}'; exit 0; fi
         printf 'X-Dashboard-Battery: %s\r\nX-Dashboard-Charging: %s\r\n' "$BATTERY" "$CHARGING"
         serve=$CACHE_DIR/pages/$PAGE.png
+        # Retain the pre-upgrade image during an offline first launch.
+        [ -f "$serve" ] || serve=$LEGACY_PAGE_CACHE/$PAGE.png
         if [ "$verb" = fetch ]; then
             acquire_lock >/dev/null 2>&1 || { respond '{"error":"Refresh busy"}'; exit 0; }
             if network_prepare && download_image; then
@@ -67,7 +81,7 @@ case "$QUERY_STRING" in
                 printf 'X-Dashboard-Stale: 1\r\n'
             fi
         fi
-        if validate_png "$serve"; then
+        if validate_cached_png "$serve"; then
             printf 'Content-Type: image/png\r\nCache-Control: no-store\r\n\r\n'
             cat "$serve"
         else respond '{"error":"No cached image; check Wi-Fi and NAS"}'; fi ;;

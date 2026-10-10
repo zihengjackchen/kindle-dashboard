@@ -7,7 +7,7 @@ from PIL import Image, ImageDraw, ImageFont
 
 ROOT = Path(__file__).resolve().parents[1]
 SCALE = 2
-im = Image.new("L", (384 * SCALE, 512 * SCALE), 255)
+im = Image.new("L", (384 * SCALE, 587 * SCALE), 255)
 d = ImageDraw.Draw(im)
 
 
@@ -32,7 +32,7 @@ def text(value, x, y, size):
     d.text((x*SCALE, y*SCALE), value, font=font, anchor="mt", fill=0)
 
 
-box((7, 7, 377, 505), radius=19, width=3)
+box((7, 7, 377, 580), radius=19, width=3)
 # Leave the upper-right corner clear for Kindle's reading-progress badge.
 text("DASH", 192, 29, 35)
 text("BOARD", 192, 65, 35)
@@ -51,16 +51,19 @@ d.rectangle((85*SCALE, 208*SCALE, 145*SCALE, 218*SCALE), fill=255)
 # Markets: a bold sparkline, no invented prices.
 line([(219, 224), (239, 201), (256, 210), (279, 177), (300, 188), (331, 156)], width=5)
 line([(314, 156), (331, 156), (331, 174)], width=4)
-box((30, 276, 354, 382))
-for y, length in ((300, 190), (326, 245), (352, 150)):
+box((30, 286, 354, 436))
+for y, length in ((314, 190), (350, 245), (386, 150)):
     d.ellipse((48*SCALE, y*SCALE, 58*SCALE, (y+10)*SCALE), fill=0)
     line([(77, y+5), (length, y+5)], width=6)
-box((286, 298, 329, 362), radius=5, fill=235)
-line([(297, 315), (317, 315)], width=3)
-line([(297, 331), (317, 331)], width=3)
-text("WEATHER  /  MARKETS", 192, 413, 18)
-text("HOME SERVER", 192, 448, 20)
-im = im.resize((384, 512), Image.Resampling.LANCZOS)
+box((286, 314, 329, 407), radius=5, fill=235)
+line([(297, 335), (317, 335)], width=3)
+line([(297, 355), (317, 355)], width=3)
+text("WEATHER  /  MARKETS", 192, 481, 18)
+text("HOME SERVER", 192, 523, 20)
+# Match the installed KWordle scriptlet: 454x694, RGB PNG (neutral colors).
+im = im.resize((454, 694), Image.Resampling.LANCZOS)
+# Keep the inline metadata compact, using the panel's 16 grayscale levels.
+im = im.point(lambda pixel: round(pixel / 17) * 17).convert("RGB")
 path = ROOT / "docs/assets/dashboard-cover.png"
 path.parent.mkdir(parents=True, exist_ok=True)
 im.save(path, optimize=True)

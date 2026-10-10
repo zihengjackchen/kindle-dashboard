@@ -1,10 +1,28 @@
 /* ES5 for Kindle Mesquite. No remote scripts, animation or persistent connections. */
 (function () {
     'use strict';
-    var config = window.DASHBOARD, active = true, busy = false, index = 0, timer, heartbeat, rotate, battery=null, charging=false, initialized=false;
+    var config = window.DASHBOARD, active = true, busy = false, index = 0, timer, heartbeat, rotate, resizeTimer, battery=null, charging=false, initialized=false, imageWidth=0, imageHeight=0, lastRenderSize='';
     var settings = {pages: [{id:'overview',name:'Dashboard'},{id:'weather',name:'Weather'},{id:'markets-1',name:'Markets 1'},{id:'markets-2',name:'Markets 2'},{id:'nas',name:'Home server'}],refresh_minutes:60,night_minutes:240,rotation_minutes:0};
     function el(id) { return document.getElementById(id); }
     function message(text) { el('message').textContent = text; }
+    function canvasSize() {
+        // Mesquite's viewport already excludes native chrome. Measure only
+        // the image container; never subtract an assumed native banner height.
+        var w=el('screen').clientWidth, h=el('screen').clientHeight;
+        // Legacy Mesquite maps CSS pixels to panel pixels but reports a density
+        // multiplier (~1.8 on this Paperwhite). Applying it needlessly upsamples.
+        var ratio=Math.min(window.kindle ? 1 : (window.devicePixelRatio || 1),2560/w,2560/h);
+        return {width:Math.max(320,Math.round(w*ratio)),height:Math.max(320,Math.round(h*ratio))};
+    }
+    function fitImage() {
+        if (!imageWidth || !imageHeight) return;
+        var w=el('screen').clientWidth, h=el('screen').clientHeight;
+        var scale=Math.min(w/imageWidth,h/imageHeight);
+        var drawnWidth=Math.floor(imageWidth*scale), drawnHeight=Math.floor(imageHeight*scale);
+        el('image').style.width=drawnWidth+'px'; el('image').style.height=drawnHeight+'px';
+        el('image').style.left=Math.floor((w-drawnWidth)/2)+'px';
+        el('image').style.top=Math.floor((h-drawnHeight)/2)+'px';
+    }
     if (!config || !config.base || !config.key) {
         el('empty').textContent = 'Dashboard session setup is missing. Close and reopen.';
         return;
@@ -15,7 +33,12 @@
         function finish(error, value) { if (finished) return; finished = true; clearTimeout(deadline); done(error, value, xhr); }
         xhr.open('POST', config.base + '/cgi-bin/action?' + action, true);
         xhr.setRequestHeader('X-Dashboard-Session', config.key);
-        if (binary) xhr.overrideMimeType('text/plain; charset=x-user-defined');
+        if (binary) {
+            var canvas=canvasSize();
+            xhr.setRequestHeader('X-Dashboard-Viewport',canvas.width+'x'+canvas.height);
+            if (action.indexOf('fetch=')===0) lastRenderSize=canvas.width+'x'+canvas.height;
+            xhr.overrideMimeType('text/plain; charset=x-user-defined');
+        }
         xhr.onreadystatechange = function () {
             if (xhr.readyState !== 4) return;
             if (xhr.status !== 200) { finish('Session ended. Close and reopen Dashboard.'); return; }
@@ -49,9 +72,7 @@
             candidate.onload=function () {
                 busy=false;
                 if (!active) return;
-                var scale=Math.min((window.innerWidth-8)/candidate.width,(window.innerHeight*.82)/candidate.height);
-                el('image').style.width=Math.floor(candidate.width*scale)+'px';
-                el('image').style.height=Math.floor(candidate.height*scale)+'px';
+                imageWidth=candidate.width; imageHeight=candidate.height; fitImage();
                 el('image').src=url; el('image').style.display='inline'; el('empty').style.display='none';
                 var reported=xhr.getResponseHeader('X-Dashboard-Battery');
                 battery=reported ? Number(reported) : null; charging=xhr.getResponseHeader('X-Dashboard-Charging')==='1';
@@ -74,7 +95,7 @@
         }); else download();
     }
     function navigate(delta) { if (busy) return; index=(index+delta+settings.pages.length)%settings.pages.length; load(false); }
-    function pause() { active=false; clearTimeout(timer); clearTimeout(rotate); clearInterval(heartbeat); }
+    function pause() { active=false; clearTimeout(timer); clearTimeout(rotate); clearTimeout(resizeTimer); clearInterval(heartbeat); }
     function enter() {
         var resumed=!active;
         active=true;
@@ -96,6 +117,15 @@
         window.kindle.appmgr.onstop=pause;
     }
     window.onunload=pause;
+    window.onresize=function () {
+        fitImage(); clearTimeout(resizeTimer);
+        resizeTimer=setTimeout(function resized() {
+            if (!active) return;
+            if (busy) {resizeTimer=setTimeout(resized,500);return;}
+            var canvas=canvasSize();
+            if (lastRenderSize!==canvas.width+'x'+canvas.height) load(true);
+        },300);
+    };
     document.addEventListener('visibilitychange',function(){if(document.hidden)pause();else enter();});
     try {
         var saved=JSON.parse(window.localStorage.getItem('dashboard-settings'));

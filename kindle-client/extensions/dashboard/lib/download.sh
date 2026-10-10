@@ -5,11 +5,26 @@ validate_png() {
     [ -s "$1" ] || return 1
     png_size=$(wc -c < "$1")
     [ "$png_size" -le "$MAX_IMAGE_BYTES" ] || return 1
-    od -An -v -tu1 "$1" | awk -v width="$WIDTH" -v height="$HEIGHT" \
+    od -An -v -tu1 "$1" | awk -v width="${2:-$WIDTH}" -v height="${3:-$HEIGHT}" \
         -v filesize="$png_size" -v maxbytes="$MAX_IMAGE_BYTES" \
         -f "$DASHBOARD_DIR/lib/validate-png.awk" || return 1
     if command -v pngcheck >/dev/null 2>&1; then pngcheck -q "$1" >/dev/null 2>&1 || return 1; fi
 }
+
+validate_cached_png() (
+    # Offline images may have been rendered for a previous app viewport.
+    # Validate their own bounded IHDR geometry without relaxing fresh downloads.
+    cached_file=$1
+    cached_geometry=$(od -An -tu1 -j16 -N8 "$cached_file" 2>/dev/null | awk '
+        {for(i=1;i<=NF;i++) a[++n]=$i}
+        END {if(n==8) printf "%.0f %.0f", a[1]*16777216+a[2]*65536+a[3]*256+a[4], a[5]*16777216+a[6]*65536+a[7]*256+a[8]}')
+    # Intentional split of the two numeric fields produced by awk.
+    # shellcheck disable=SC2086
+    set -- $cached_geometry
+    [ "$#" = 2 ] || return 1
+    valid_dimension "$1" && valid_dimension "$2" || return 1
+    validate_png "$cached_file" "$1" "$2"
+)
 
 build_url() {
     # Labels are restricted ASCII, so no external URL encoder is needed.

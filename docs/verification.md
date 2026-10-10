@@ -207,3 +207,24 @@ and timed refresh on hardware remain separate acceptance checks.
 Eleven bridge/power/helper tests and ShellCheck passed. Browser tests passed for
 navigation, refresh timers, lifecycle and Close, plus the missing-bootstrap case.
 The private and public USB ZIPs were rebuilt. NAS software was unchanged.
+
+## Cover proportions and app canvas - October 9, 2026
+
+Decoded the actual installed KWordle scriptlet icon: 454x694 RGB PNG. The original
+Dashboard cover was 384x512 grayscale. Its generator now draws a portrait cover
+and exports KWordle's exact dimensions and RGB format without using its artwork.
+
+The native app now requests its measured canvas dimensions through a validated
+loopback header. On the physical Paperwhite, the final NAS request and validated
+PNG were 1056x1118; the screen capture showed the full-width layout, with status
+and controls below it and no clipping. A native density value around 1.8 initially
+caused needless oversampling; the final Mesquite path uses physical CSS pixels.
+App caches are isolated from the full-panel framebuffer mode, and offline fallback
+accepts valid earlier geometry without weakening fresh-download dimension checks.
+
+Bridge tests cover viewport requests, invalid geometry before network access,
+cache isolation, resizing offline, and old-cache migration. Browser checks cover
+canvas fill, control clearance, window resize and misleading native density.
+The bridge suite passed 12 tests; a focused bridge/manual-download regression run
+passed 16 tests. ShellCheck passed. Existing NAS rendering supports these dimensions
+without a server update.

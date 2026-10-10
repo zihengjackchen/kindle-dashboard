@@ -16,6 +16,8 @@ it does not embed Wordle or KOReader. The owner reports KWordle working on firmw
    `docs/assets/dashboard-cover.png`. USB eject normally triggers indexing; over
    SSH, this device accepts `lipc-set-prop com.lab126.scanner reScanFile
    /mnt/us/documents/Dashboard.sh` to refresh only this document.
+   The cover matches the installed KWordle image format: **454 x 694, RGB PNG**,
+   with grayscale artwork and space for Kindle's progress badge.
 2. Safely eject. Open **Dashboard** in the library, like KWordle. KUAL's
    **Start Dashboard** launches the same app. Existing Refresh/Next/Previous items
    remain a framebuffer fallback.
@@ -111,6 +113,22 @@ pressing the power button. A screenshot/photo cannot establish the power state.
 
 ## Local bridge and cache
 
+The library app measures its image container after the native header and its
+own navigation/status rows take their space. Binary requests send this geometry
+as the authenticated `X-Dashboard-Viewport: WIDTHxHEIGHT` loopback header. The
+shell accepts only dimensions 320-2560 and passes them to the NAS using the
+existing `width`/`height` query parameters. Thus Pillow lays out the page at the
+app's aspect ratio; it is not a full-panel wallpaper squeezed into the window.
+On this Paperwhite the measured image area is **1056 x 1118**, versus the panel's
+1072 x 1448. Those numbers are observed, not hardcoded. Resize events trigger a
+new render only when geometry changes. Legacy Mesquite's misleading pixel-density
+multiplier is ignored because its CSS coordinates already match panel pixels.
+
+App caches live in `cache/app/pages/`, separate from the full-panel KUAL cache.
+Fresh downloads must match the requested dimensions. Offline cached images are
+validated at their own bounded dimensions and fitted proportionally until a new
+render succeeds. Pre-upgrade caches remain readable as an offline fallback.
+
 A compatible BusyBox HTTP daemon binds **127.0.0.1:18765 only**, while the app is
 open. The app manifest points at an unguessable session directory on that origin,
 serving the app assets. This device also resolves JavaScript from its native app
@@ -124,7 +142,8 @@ The shell downloads/validates a PNG into a pending file. The app decodes it befo
 acknowledging its checksum; only then does the shell atomically replace that
 page's good cache. Authentication/HTTP/decode failures retain the earlier image.
 Old images retain their original timestamp. A stale/source warning appears only
-when needed. Disk logs rotate; there are at most five cached and five pending PNGs.
+when needed. Disk logs rotate; the app holds at most five cached and five pending
+PNGs, in addition to the separately retained framebuffer caches.
 
 ## Exit and recovery
 

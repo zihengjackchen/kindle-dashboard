@@ -16,6 +16,7 @@ APP=ROOT/'kindle-client/extensions/dashboard/app'
 def main():
     calls=[]
     session_available=[True]
+    requested_sizes=[]
     out=BytesIO(); Image.new('L',(600,800),240).save(out,format='PNG'); png=out.getvalue()
     with sync_playwright() as pw:
         options={'headless':True}
@@ -33,7 +34,14 @@ def main():
                     request.fulfill(json={'pages':[{'id':'overview','name':'Overview'},{'id':'nas','name':'Server'}],
                                           'refresh_minutes':5,'night_minutes':15,'rotation_minutes':0})
                 elif action.startswith(('fetch=','cached=')):
-                    request.fulfill(body=png,headers={'Content-Type':'image/png','X-Dashboard-Revision':'3000000000','X-Dashboard-Battery':'90'})
+                    size=tuple(map(int,request.request.headers['x-dashboard-viewport'].split('x')))
+                    requested_sizes.append(size)
+                    # Old cache can have a different aspect ratio. Fresh images
+                    # must use the canvas dimensions requested by the browser.
+                    payload=png
+                    if action.startswith('fetch='):
+                        rendered=BytesIO();Image.new('L',size,240).save(rendered,format='PNG');payload=rendered.getvalue()
+                    request.fulfill(body=payload,headers={'Content-Type':'image/png','X-Dashboard-Revision':'3000000000','X-Dashboard-Battery':'90'})
                 else: request.fulfill(json={'ok':True})
             elif path=='/session.js': request.fulfill(body='window.DASHBOARD={base:"http://kindle.test",key:"test"}' if session_available[0] else '',content_type='application/javascript')
             else:
@@ -47,10 +55,29 @@ def main():
         page.wait_for_timeout(300)
         assert 'fetch=overview' in calls and 'commit=overview:3000000000' in calls
         assert page.locator('#image').bounding_box()['height'] < 800
+        assert requested_sizes[-1] == (584,686)
+        def assert_fills_canvas():
+            canvas=page.locator('#screen').bounding_box(); drawn=page.locator('#image').bounding_box()
+            for k in ('x','y','width','height'): assert abs(canvas[k]-drawn[k])<=1,(canvas,drawn)
+            assert drawn['y']+drawn['height'] < page.locator('#controls').bounding_box()['y']
+            status=page.locator('#message').bounding_box(); controls=page.locator('#controls').bounding_box()
+            assert status['y']+status['height'] < controls['y']
+        assert_fills_canvas()
         page.locator('#next').click()
         page.wait_for_function("document.querySelector('#message').textContent==='Server'")
         page.wait_for_timeout(300)
         assert 'fetch=nas' in calls
+        page.set_viewport_size({'width':800,'height':600})
+        page.clock.fast_forward(1000)
+        page.wait_for_function("document.querySelector('#image').naturalWidth===784")
+        assert requested_sizes[-1] == (784,486)
+        assert_fills_canvas()
+        page.evaluate('Object.defineProperty(window,"devicePixelRatio",{value:2,configurable:true})')
+        page.set_viewport_size({'width':640,'height':900})
+        page.clock.fast_forward(1000)
+        page.wait_for_function("document.querySelector('#image').naturalWidth===624")
+        assert requested_sizes[-1] == (624,786)  # Mesquite density must not upsample.
+        assert_fills_canvas()
         count=calls.count('fetch=nas')
         page.clock.fast_forward(16*60000)
         page.wait_for_timeout(500)

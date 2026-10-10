@@ -3,7 +3,7 @@
 The Dashboard library scriptlet follows the same Mesquite registration pattern as
 [KWordle](https://github.com/crizmo/KWordle). It is independently implemented here;
 it does not embed Wordle or KOReader. The owner reports KWordle working on firmware
-5.16.2.1.1. Dashboard itself still requires an on-device acceptance test.
+5.16.2.1.1. Document launch, navigation, exit, and reopening are verified there.
 
 ## Install
 
@@ -70,9 +70,9 @@ a successful on-device launch remains required.
 
 ## Controls and refresh
 
-Previous/Next show cached pages immediately and request an update. Refresh fetches
-the current page. Close revokes the local session, restores light/power settings
-and asks the native app manager to open Home. The system chromebar also has Close.
+Previous/Next switch cached pages immediately without any network request. Refresh
+fetches every configured page in one bundle. The top native **X** returns Home;
+the session supervisor then restores light/power settings and stops the bridge.
 The session supervisor detects leaving the app through `appmgrd.activeApp` when
 available; otherwise lifecycle callbacks and a 90-second heartbeat lease stop it.
 Cleanup unloads this app's WebKit instance so reopening gets a fresh session.
@@ -119,15 +119,34 @@ as the authenticated `X-Dashboard-Viewport: WIDTHxHEIGHT` loopback header. The
 shell accepts only dimensions 320-2560 and passes them to the NAS using the
 existing `width`/`height` query parameters. Thus Pillow lays out the page at the
 app's aspect ratio; it is not a full-panel wallpaper squeezed into the window.
-On this Paperwhite the measured image area is **1056 x 1118**, versus the panel's
+On this Paperwhite the measured image area is **1056 x 1140**, versus the panel's
 1072 x 1448. Those numbers are observed, not hardcoded. Resize events trigger a
 new render only when geometry changes. Legacy Mesquite's misleading pixel-density
 multiplier is ignored because its CSS coordinates already match panel pixels.
 
-App caches live in `cache/app/pages/`, separate from the full-panel KUAL cache.
-Fresh downloads must match the requested dimensions. Offline cached images are
-validated at their own bounded dimensions and fitted proportionally until a new
-render succeeds. Pre-upgrade caches remain readable as an offline fallback.
+The three app controls sit at the top: **Previous / Refresh / Next**. Use the
+Kindle's native **X** in the title bar to exit. The dashboard fills the area below
+those controls and the short status line; nothing is reserved at the bottom.
+
+Each refresh makes **one NAS request** to `/dashboard-bundle.json`, including the
+measured viewport and device telemetry. The JSON response contains every configured
+page as a base64 PNG, page names/order, refresh settings, and one generation time.
+The NAS reads the layout and data snapshot once for a consistent set. No separate
+settings request is needed. Navigation switches images already in browser memory;
+it does not contact the NAS or postpone the next scheduled refresh.
+
+The complete bundle is retained in `cache/app/bundle.json`, separate from the
+full-panel KUAL cache. Download goes to a temporary file, with HTTP status, content
+type, deadline and an 8 MiB size limit checked. It becomes `bundle.pending`, while
+the good bundle remains intact. Mesquite parses the schema and decodes every PNG,
+checking dimensions, before acknowledging the pending file's checksum. Only that
+acknowledgement atomically replaces `bundle.json`. A damaged image rejects the
+whole update. At most one good and one pending bundle are retained.
+
+Opening the app reads the local bundle first, then attempts a refresh. Failure
+retains all old pages and their original timestamps, with a cached status label.
+Older per-page caches are a first-upgrade fallback when no bundle exists. Legacy
+framebuffer KUAL refresh/navigation still use their separate per-page workflow.
 
 A compatible BusyBox HTTP daemon binds **127.0.0.1:18765 only**, while the app is
 open. The app manifest points at an unguessable session directory on that origin,
@@ -138,16 +157,9 @@ require POST plus a random per-session header; NAS credentials never enter the
 HTML/JavaScript. Only fixed page IDs and actions are accepted. There is no generic
 shell-command, filesystem, NAS control, or arbitrary URL endpoint.
 
-The shell downloads/validates a PNG into a pending file. The app decodes it before
-acknowledging its checksum; only then does the shell atomically replace that
-page's good cache. Authentication/HTTP/decode failures retain the earlier image.
-Old images retain their original timestamp. A stale/source warning appears only
-when needed. Disk logs rotate; the app holds at most five cached and five pending
-PNGs, in addition to the separately retained framebuffer caches.
-
 ## Exit and recovery
 
-1. Use the app's Close button or native Close. KUAL **Stop Dashboard** is a fallback.
+1. Use the native **X** in the app's top title bar. KUAL **Stop Dashboard** is a fallback.
 2. Via SSH: `sh /mnt/us/extensions/dashboard/stop.sh`.
 3. Via USB: create an empty `/mnt/us/dashboard-disable` (USB-root
    `dashboard-disable`). The session exits on its next supervisor tick. If asleep,

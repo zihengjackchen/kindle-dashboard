@@ -38,6 +38,7 @@ build_url() {
 }
 
 http_fetch() (
+    expected_type=${1:-image/png}
     # A subshell scopes the file-size limit to the downloader. POSIX ulimit -f
     # uses 512-byte blocks (some shells use 1024); final byte validation is exact.
     if ! ulimit -f "$(( (MAX_IMAGE_BYTES + 511) / 512 ))" 2>/dev/null; then
@@ -79,7 +80,8 @@ http_fetch() (
             ;;
         *) exit 1 ;;
     esac
-    awk 'tolower($1) == "content-type:" {v=tolower($2); gsub(/\r/, "", v); sub(/;.*/, "", v); if (v == "image/png") ok=1} END {exit !ok}' "$TMP_HEADERS" || exit 1
+    awk -v expected="$expected_type" 'tolower($1) == "content-type:" {v=tolower($2); gsub(/\r/, "", v); sub(/;.*/, "", v); if (v == expected) ok=1} END {exit !ok}' "$TMP_HEADERS" || exit 1
+    [ "$expected_type" = image/png ] || exit 0
     # A legacy server may silently ignore page queries. Require acknowledgement.
     awk -v page="$PAGE" 'tolower($1) == "x-dashboard-page:" {v=$2; gsub(/\r/, "", v); if (v == page) ok=1} END {exit !ok}' "$TMP_HEADERS"
 )

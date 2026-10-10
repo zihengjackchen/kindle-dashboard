@@ -46,7 +46,8 @@ def nas():
             elif path == "/html":
                 code, mime, content = 200, "image/png", b"<html>Not a PNG</html>"
             else:
-                response = api.get("/dashboard.png?" + urlsplit(self.path).query, headers={"Authorization": self.headers.get("Authorization", "")})
+                endpoint = "/dashboard-bundle.json" if path == "/dashboard-bundle.json" else "/dashboard.png"
+                response = api.get(endpoint + "?" + urlsplit(self.path).query, headers={"Authorization": self.headers.get("Authorization", "")})
                 code, mime, content = response.status_code, response.headers["content-type"], response.content
                 if path == "/truncated":
                     content = content[:-8]

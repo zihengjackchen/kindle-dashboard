@@ -1,7 +1,7 @@
 /* ES5 for Kindle Mesquite. No remote scripts, animation or persistent connections. */
 (function () {
     'use strict';
-    var config = window.DASHBOARD, active = true, busy = false, index = 0, timer, heartbeat, rotate, resizeTimer, battery=null, charging=false, initialized=false, imageWidth=0, imageHeight=0, lastRenderSize='';
+    var config = window.DASHBOARD, active = true, busy = false, index = 0, timer, heartbeat, rotate, resizeTimer, battery=null, charging=false, initialized=false, imageWidth=0, imageHeight=0, lastRenderSize='', pages={}, stale=true;
     var settings = {pages: [{id:'overview',name:'Dashboard'},{id:'weather',name:'Weather'},{id:'markets-1',name:'Markets 1'},{id:'markets-2',name:'Markets 2'},{id:'nas',name:'Home server'}],refresh_minutes:60,night_minutes:240,rotation_minutes:0};
     function el(id) { return document.getElementById(id); }
     function message(text) { el('message').textContent = text; }
@@ -33,11 +33,11 @@
         function finish(error, value) { if (finished) return; finished = true; clearTimeout(deadline); done(error, value, xhr); }
         xhr.open('POST', config.base + '/cgi-bin/action?' + action, true);
         xhr.setRequestHeader('X-Dashboard-Session', config.key);
-        if (binary) {
+        if (binary || action === 'bundle') {
             var canvas=canvasSize();
             xhr.setRequestHeader('X-Dashboard-Viewport',canvas.width+'x'+canvas.height);
-            if (action.indexOf('fetch=')===0) lastRenderSize=canvas.width+'x'+canvas.height;
-            xhr.overrideMimeType('text/plain; charset=x-user-defined');
+            if (action === 'bundle') lastRenderSize=canvas.width+'x'+canvas.height;
+            if (binary) xhr.overrideMimeType('text/plain; charset=x-user-defined');
         }
         xhr.onreadystatechange = function () {
             if (xhr.readyState !== 4) return;
@@ -60,41 +60,97 @@
         timer=setTimeout(function () { load(true); },Math.max(5,minutes)*60000);
         if (settings.rotation_minutes > 0) rotate=setTimeout(function () { navigate(1); }, Math.max(1,settings.rotation_minutes)*60000);
     }
+    function showPage() {
+        var page=settings.pages[index], image=pages[page.id];
+        if (!image) { message('No cached page. Tap Refresh.'); return; }
+        imageWidth=image.width; imageHeight=image.height; fitImage();
+        el('image').src=image.url; el('image').style.display='inline'; el('empty').style.display='none';
+        message(page.name+(stale?' \u00b7 Cached':''));
+    }
+    function validateBundle(value, fresh, done) {
+        var next={}, seen={}, n=0, list=value && value.settings && value.settings.pages;
+        function invalid() { done('Invalid image bundle; previous pages retained'); }
+        if (!value || value.version!==1 || !list || !list.length || list.length>5 || !value.images ||
+            typeof value.width!=='number' || typeof value.height!=='number' ||
+            value.width%1!==0 || value.height%1!==0 ||
+            value.width<320 || value.width>2560 || value.height<320 || value.height>2560 ||
+            (fresh && value.width+'x'+value.height!==lastRenderSize) ||
+            !(value.settings.refresh_minutes>=5 && value.settings.refresh_minutes<=1440) ||
+            !(value.settings.night_minutes>=15 && value.settings.night_minutes<=1440) ||
+            !(value.settings.rotation_minutes>=0 && value.settings.rotation_minutes<=1440)) { invalid(); return; }
+        function decode() {
+            if (n===list.length) { done(null,next); return; }
+            var page=list[n++], candidate=new Image();
+            if (!page || typeof page.id!=='string') { invalid(); return; }
+            var data=value.images[page.id];
+            if (!/^(overview|weather|markets-1|markets-2|nas)$/.test(page.id) || seen[page.id] ||
+                typeof page.name!=='string' || typeof data!=='string' || data.length>8388608 ||
+                data.slice(0,11)!=='iVBORw0KGgo') { invalid(); return; }
+            seen[page.id]=true;
+            candidate.onload=function () {
+                if (candidate.width!==value.width || candidate.height!==value.height) { invalid(); return; }
+                next[page.id]={url:'data:image/png;base64,'+data,width:candidate.width,height:candidate.height};
+                decode();
+            };
+            candidate.onerror=invalid;
+            candidate.src='data:image/png;base64,'+data;
+        }
+        decode();
+    }
+    function legacyFallback(done) {
+        request('cached='+settings.pages[index].id,true,function(error,url) {
+            if (error || !active) { done(); return; }
+            var image=new Image();
+            image.onload=function () {
+                if (active) { pages[settings.pages[index].id]={url:url,width:image.width,height:image.height}; showPage(); }
+                done();
+            };
+            image.onerror=done; image.src=url;
+        });
+    }
     function load(fetch) {
         if (busy || !active) return;
         busy=true;
-        var page=settings.pages[index], wasActive=active;
-        message(fetch ? 'Updating…' : page.name);
-        function download() { request((fetch?'fetch=':'cached=')+page.id,true,function (error,url,xhr) {
-            if (!active || !wasActive) { busy=false; return; }
-            if (error) { busy=false; message(error); if (!fetch) load(true); else schedule(); return; }
-            var candidate = new Image();
-            candidate.onload=function () {
+        if (fetch) message('Updating all pages...');
+        request(fetch?'bundle':'cached-bundle',false,function(error,value,xhr) {
+            if (!active) { busy=false; return; }
+            function finish(error) {
                 busy=false;
-                if (!active) return;
-                imageWidth=candidate.width; imageHeight=candidate.height; fitImage();
-                el('image').src=url; el('image').style.display='inline'; el('empty').style.display='none';
-                var reported=xhr.getResponseHeader('X-Dashboard-Battery');
-                battery=reported ? Number(reported) : null; charging=xhr.getResponseHeader('X-Dashboard-Charging')==='1';
-                var revision=xhr.getResponseHeader('X-Dashboard-Revision');
-                if (revision) request('commit='+page.id+':'+revision,false,function () {});
-                message(page.name + (xhr.getResponseHeader('X-Dashboard-Stale')==='1'?' · Offline / cached':''));
+                if (error) { stale=true; message(error); }
                 if (!fetch) load(true); else schedule();
-            };
-            candidate.onerror=function () { busy=false; message('Image could not be decoded; previous page retained'); schedule(); };
-            candidate.src=url;
-        }); }
-        if (fetch) request('settings',false,function(error,value){
-            if (!error && value.pages && value.pages.length) {
-                settings=value;
-                try { window.localStorage.setItem('dashboard-settings',JSON.stringify(settings)); } catch (ignored) {}
-                var found=-1,j;for(j=0;j<settings.pages.length;j++)if(settings.pages[j].id===page.id)found=j;
-                index=found<0?0:found;page=settings.pages[index];
             }
-            download();
-        }); else download();
+            if (error) {
+                if (!fetch) { legacyFallback(function(){finish(error);}); return; }
+                finish(error); return;
+            }
+            var revision=xhr.getResponseHeader('X-Dashboard-Revision');
+            validateBundle(value,!!revision,function(error,next) {
+                if (!active) { busy=false; return; }
+                if (error) { finish(error); return; }
+                function install(error) {
+                    if (!active) { busy=false; return; }
+                    if (error) { finish(error); return; }
+                    var selected=settings.pages[index].id, j;
+                    settings=value.settings; pages=next; index=0;
+                    for(j=0;j<settings.pages.length;j++) if(settings.pages[j].id===selected) index=j;
+                    battery=value.battery; charging=!!value.charging;
+                    stale=!fetch || xhr.getResponseHeader('X-Dashboard-Stale')==='1';
+                    showPage(); finish(null);
+                }
+                // The shell atomically commits the entire bundle only after every
+                // PNG decoded. A damaged page never replaces any working page.
+                if (revision) request('commit-bundle='+revision,false,install);
+                else install(null);
+            });
+        });
     }
-    function navigate(delta) { if (busy) return; index=(index+delta+settings.pages.length)%settings.pages.length; load(false); }
+    function navigate(delta) {
+        index=(index+delta+settings.pages.length)%settings.pages.length;
+        showPage();
+        // Page navigation is entirely local and does not postpone refresh.
+        clearTimeout(rotate);
+        if (active && settings.rotation_minutes>0) rotate=setTimeout(function(){navigate(1);},Math.max(1,settings.rotation_minutes)*60000);
+    }
     function pause() { active=false; clearTimeout(timer); clearTimeout(rotate); clearTimeout(resizeTimer); clearInterval(heartbeat); }
     function enter() {
         var resumed=!active;
@@ -107,7 +163,6 @@
     }
     el('previous').onclick=function () {navigate(-1);}; el('next').onclick=function () {navigate(1);};
     el('refresh').onclick=function () {load(true);};
-    el('close').onclick=function () { pause(); request('close',false,function(error){message(error||'Closed');}); };
     if (window.kindle && window.kindle.appmgr) {
         window.kindle.appmgr.ongo=function () {
             window.kindle.messaging.sendMessage('com.lab126.chromebar','configureChrome',{appId:'org.kindledashboard.app',topNavBar:{template:'title',title:'Dashboard',buttons:[{id:'KPP_CLOSE',state:'enabled',handling:'system'}]}});
@@ -127,10 +182,6 @@
         },300);
     };
     document.addEventListener('visibilitychange',function(){if(document.hidden)pause();else enter();});
-    try {
-        var saved=JSON.parse(window.localStorage.getItem('dashboard-settings'));
-        if (saved && saved.pages && saved.pages.length) settings=saved;
-    } catch (ignored) {}
     enter();
     initialized=true;
     load(false);

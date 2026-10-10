@@ -1,5 +1,6 @@
 from datetime import datetime, timezone
 from io import BytesIO
+import base64
 
 import pytest
 from fastapi.testclient import TestClient
@@ -18,6 +19,35 @@ def client():
 
 def test_health(client):
     assert client.get("/health").json() == {"status": "ok"}
+
+
+@pytest.mark.parametrize("width,height", [(600, 800), (1056, 1140)])
+def test_bundle_contains_all_pages_and_settings(client, width, height):
+    response = client.get(f"/dashboard-bundle.json?width={width}&height={height}&battery=73&charging=1")
+    assert response.status_code == 200
+    assert response.headers['content-type'] == 'application/json'
+    assert response.headers['cache-control'] == 'no-store'
+    bundle = response.json()
+    assert bundle['version'] == 1 and bundle['battery'] == 73 and bundle['charging']
+    assert len(bundle['images']) == 5
+    assert set(bundle['images']) == {p['id'] for p in bundle['settings']['pages']}
+    for image in bundle['images'].values():
+        with Image.open(BytesIO(base64.b64decode(image, validate=True))) as decoded:
+            decoded.load()
+            assert decoded.size == (width, height) and decoded.mode == 'L'
+
+
+def test_bundle_auth_validation_and_failure(monkeypatch):
+    client = TestClient(create_app(Settings(api_token='secret')))
+    assert client.get('/dashboard-bundle.json').status_code == 401
+    headers = {'Authorization': 'Bearer secret'}
+    assert client.get('/dashboard-bundle.json?battery=101', headers=headers).status_code == 422
+    def broken(*args):
+        raise RuntimeError('render failed')
+    monkeypatch.setattr('app.main.render_dashboard', broken)
+    response = client.get('/dashboard-bundle.json', headers=headers)
+    assert response.status_code == 500
+    assert 'images' not in response.json()
 
 
 @pytest.mark.parametrize("width,height", [(600, 800), (758, 1024), (1072, 1448), (1236, 1648), (1648, 1236), (320, 320), (2560, 2560)])

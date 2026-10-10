@@ -1,5 +1,6 @@
 """Exercise the real CGI shell against a real HTTP server, with device I/O mocked."""
 import subprocess
+import json
 from pathlib import Path
 from io import BytesIO
 from urllib.parse import parse_qs, urlsplit
@@ -59,6 +60,27 @@ def test_close_revokes_session(setup):
     assert b'"ok":true' in call(env,'close')[1]
     assert not (data/'state/app-key').exists()
     assert '403' in call(env,'fetch=overview')[0]
+
+
+def test_bundle_single_request_atomic_commit_and_offline_retention(setup):
+    env, data = session(setup)
+    env['HTTP_X_DASHBOARD_VIEWPORT'] = '584x708'
+    headers, body = call(env, 'bundle')
+    assert len(setup[3]) == 1
+    assert '/dashboard-bundle.json?' in setup[3][0][0]
+    value = json.loads(body)
+    assert len(value['images']) == 5 and value['width'] == 584 and value['height'] == 708
+    assert not (data/'cache/app/bundle.json').exists()
+    revision = next(s.split(': ',1)[1] for s in headers.splitlines() if s.startswith('X-Dashboard-Revision'))
+    assert b'Bundle superseded' in call(env, 'commit-bundle=123')[1]
+    assert b'"ok":true' in call(env, 'commit-bundle='+revision)[1]
+    assert call(env, 'cached-bundle')[1] == body
+    assert len(setup[3]) == 1  # Commit and cache reads never contact NAS.
+    env['DASHBOARD_URL'] = setup[2] + '/error'
+    headers, retained = call(env, 'bundle')
+    assert 'X-Dashboard-Stale: 1' in headers and retained == body
+    assert (data/'cache/app/bundle.json').read_bytes() == body
+    assert 'test-secret' not in (data/'logs/dashboard.log').read_text()
 
 
 def test_ui_entry_is_logged_only_after_authenticated_browser_call(setup):

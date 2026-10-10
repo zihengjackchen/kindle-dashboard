@@ -1,4 +1,6 @@
 import logging
+import base64
+import json
 import secrets
 from datetime import datetime, timezone
 from pathlib import Path
@@ -44,6 +46,33 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             raise HTTPException(500, "Image generation failed") from None
         return Response(png, media_type="image/png", headers={"Cache-Control": "no-store", "X-Dashboard-Page": data.page})
 
+    def client_settings(value):
+        return {"pages": [{"id": p, "name": value.for_page(p).title} for p in value.page_order],
+                "refresh_minutes": value.refresh_minutes, "night_minutes": value.night_minutes,
+                "rotation_minutes": value.rotation_minutes}
+
+    @app.get("/dashboard-bundle.json", dependencies=[Depends(authenticate)])
+    def dashboard_bundle(data: Annotated[DashboardRequest, Query()]):
+        contacts.contact(data)
+        # Read one snapshot/layout/time so every page represents the same refresh.
+        value = layouts.get()
+        now = datetime.now(timezone.utc)
+        snapshot = load_snapshot(settings.snapshot_path)
+        try:
+            images = {page: base64.b64encode(render_dashboard(
+                data.model_copy(update={"page": page}), settings, now, snapshot, value
+            )).decode("ascii") for page in value.page_order}
+            payload = json.dumps({"version": 1, "width": data.width, "height": data.height,
+                                  "generated_at": now.isoformat(), "battery": data.battery,
+                                  "charging": data.charging, "settings": client_settings(value),
+                                  "images": images}, separators=(",", ":")).encode()
+        except Exception:
+            logger.exception("Bundle generation failed for dimensions=%sx%s", data.width, data.height)
+            raise HTTPException(500, "Bundle generation failed") from None
+        if len(payload) > 8 * 1024 * 1024:
+            raise HTTPException(413, "Bundle exceeds 8 MiB")
+        return Response(payload, media_type="application/json", headers={"Cache-Control": "no-store"})
+
     def editor_auth(authorization: Annotated[str | None, Header()] = None):
         if not settings.api_token:
             raise HTTPException(503, "Set API_TOKEN before enabling the layout editor")
@@ -73,9 +102,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     def client_config(response: Response):
         response.headers["Cache-Control"] = "no-store"
         value = layouts.get()
-        return {"pages": [{"id": p, "name": value.for_page(p).title} for p in value.page_order],
-                "refresh_minutes": value.refresh_minutes, "night_minutes": value.night_minutes,
-                "rotation_minutes": value.rotation_minutes}
+        return client_settings(value)
 
     @app.put("/layout", dependencies=[Depends(editor_auth)])
     async def save_layout(request: Request):

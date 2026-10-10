@@ -1,7 +1,7 @@
 # Kindle Dashboard
 
 A Kindle library app and NAS-rendered grayscale dashboard. Open **Dashboard** like
-KWordle, use **Previous / Refresh / Next / Close**, and customize the pages in your
+KWordle, use **Previous / Refresh / Next** at the top and the native **X** to exit, and customize the pages in your
 NAS browser. Amazon Special Offers and its normal lockscreen remain untouched.
 
 **Existing deployment:** http://192.168.1.8:8080/ — use your dashboard token.
@@ -22,6 +22,8 @@ NAS browser. Amazon Special Offers and its normal lockscreen remain untouched.
 ## Included
 
 - Five customizable dashboard pages with names and ordering.
+- One NAS request per app refresh downloads all configured pages and settings;
+  Previous/Next are instant local cache switches, including offline.
 - Weather in Celsius and Fahrenheit, configurable watchlists, NAS metrics,
   Backblaze Cloud Sync status, Kindle telemetry and manual notes.
 - Drag-and-drop widget order, half/full width, three height choices, per-widget
@@ -31,7 +33,7 @@ NAS browser. Amazon Special Offers and its normal lockscreen remain untouched.
 - App refresh timer: 60 minutes normally, four hours at night or low battery;
   configurable in the editor. Optional timed page rotation is off initially.
 - Frontlight level saved and set to zero on entry; previous level restored on exit.
-- Authenticated downloads, bounded PNG validation, decode-before-commit page cache,
+- Authenticated downloads, bounded PNG validation, decode-before-commit all-page cache,
   retained stale images on failure, bounded logs, Stop and USB kill switch.
 - KUAL manual framebuffer refresh and cached navigation remain fallback tools.
 
@@ -55,12 +57,12 @@ Kindle. See the exact checks and recovery steps in [kindle-app.md](docs/kindle-a
 
 ```text
 Dashboard library scriptlet / KUAL
-  -> Mesquite app: cached image + Previous / Refresh / Next / Close
+  -> Mesquite app: cached images + top Previous / Refresh / Next + native X
   -> loopback-only, per-session authenticated shell CGI
   -> device telemetry + bounded HTTP request to NAS
 NAS collectors -> persisted source snapshots
-  -> FastAPI -> Pillow grayscale PNG
-Kindle -> validate -> decode -> atomic per-page cache -> display
+  -> FastAPI -> bundle of Pillow grayscale PNGs + settings
+Kindle -> validate -> decode all pages -> atomic bundle cache -> local navigation
 ```
 
 The bridge runs only for the app session and exposes fixed actions, never arbitrary
@@ -88,7 +90,7 @@ version display as unavailable. See [server README](server/README.md).
 
 ## Exit and recovery
 
-Use **Close** in the app or **Stop Dashboard** in KUAL. From SSH:
+Use the native **X** at the top or **Stop Dashboard** in KUAL. From SSH:
 `sh /mnt/us/extensions/dashboard/stop.sh`.
 Create an empty file named `dashboard-disable` at the USB root to revoke the app
 session and prevent launching. Normal Kindle restart remains available. No startup

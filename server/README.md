@@ -3,7 +3,7 @@
 The current editor supports all five pages, drag-and-drop widget ordering, field selection, refresh settings and rendered previews. The TrueNAS host exporter includes B2 Cloud Sync summaries and bounded system metrics. ChatGPT usage is removed. See [Kindle app](../docs/kindle-app.md).
 
 Routes are `GET /health`, `GET /dashboard.png`, authenticated `GET /status`,
-`GET /layout`, `PUT /layout`, `POST /preview.png`, and the dashboard studio at `GET /`.
+`GET /dashboard-bundle.json`, `GET /client-config.json`, `GET /layout`, `PUT /layout`, `POST /preview.png`, and the dashboard studio at `GET /`.
 See [the editor guide](../docs/dashboard-editor.md) for layout controls and API details.
 The service has no database, system control endpoints,
 or Docker socket. An optional separate NAS collector performs provider calls;
@@ -11,6 +11,17 @@ the image request path never does.
 Health returns `{"status":"ok"}` without authentication. The image endpoint uses
 an optional shared bearer token and returns `image/png` with `Cache-Control:
 no-store`. Errors return JSON and must never enter the Kindle image cache.
+
+## All-page app refresh
+
+`GET /dashboard-bundle.json` accepts the same dimensions, telemetry and bearer
+header as `/dashboard.png`. It returns `application/json`, `Cache-Control: no-store`:
+`version: 1`, `width`, `height`, `generated_at`, `battery`, `charging`, `settings`
+(page names/order and refresh intervals), and `images` (page ID to base64 PNG).
+All pages in the configured page order use the same snapshot, layout and timestamp.
+Any rendering failure rejects the entire request. Responses are limited to 8 MiB.
+The Kindle validates and decodes every image before committing the bundle cache.
+The older single-PNG endpoint remains available for framebuffer refresh and previews.
 
 ## Docker deployment
 

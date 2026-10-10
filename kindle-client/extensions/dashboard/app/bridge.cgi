@@ -5,6 +5,7 @@
 . "$DASHBOARD_DIR/lib/client.sh"
 # shellcheck source=../lib/app-power.sh
 . "$DASHBOARD_DIR/lib/app-power.sh"
+. "$DASHBOARD_DIR/lib/bundle.sh"
 respond() { printf 'Content-Type: application/json\r\nCache-Control: no-store\r\n\r\n%s\n' "$1"; }
 if [ "$REQUEST_METHOD" != POST ] || [ -z "$HTTP_X_DASHBOARD_SESSION" ] || [ "$HTTP_X_DASHBOARD_SESSION" != "$(read_first "$STATE_DIR/app-key")" ] || disabled; then
     printf 'Status: 403 Forbidden\r\n'; respond '{"error":"Session closed"}'; exit 0
@@ -14,6 +15,8 @@ LEGACY_PAGE_CACHE=$CACHE_DIR/pages
 CACHE_DIR=$CACHE_DIR/app
 mkdir -p "$CACHE_DIR/pages" || exit 1
 case "$QUERY_STRING" in
+    bundle|cached-bundle|commit-bundle=*)
+        bundle_action ;;
     heartbeat)
         date +%s > "$STATE_DIR/app-heartbeat"
         respond '{"ok":true}' ;;

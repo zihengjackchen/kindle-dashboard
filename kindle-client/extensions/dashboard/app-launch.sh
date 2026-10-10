@@ -54,7 +54,6 @@ if [ -f "$STATE_DIR/app.pid" ]; then
     fail 'Stale app session exists. Run Stop Dashboard, then reopen.'; exit 1
 fi
 stop_listener
-display_opening
 APP_ROOT=/var/local/mesquite/org.kindledashboard.app
 mkdir -p "$APP_ROOT" || exit 1
 # Mesquite runs as framework, while launchers run as root with umask 077.

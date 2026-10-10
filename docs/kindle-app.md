@@ -141,8 +141,9 @@ The three app controls sit at the top: **Previous / Refresh / Next**. Use the
 Kindle's native **X** in the title bar to exit. The dashboard fills the area below
 those controls; no status row or bottom row is reserved. The Refresh button shows
 progress while fetching, then returns to its normal label. Errors are temporary
-8-second overlays. A plain opening message is shown during launch and a white
-loading view appears until cached content is ready.
+8-second overlays. A white loading view inside the app appears until cached content is ready.
+The launcher does not write loading text directly into the framebuffer: those
+pixels can outlive the message because native chrome only repaints changed areas.
 
 Each refresh makes **one NAS request** to `/dashboard-bundle.json`, including the
 measured viewport and device telemetry. The JSON response contains every configured
@@ -213,3 +214,8 @@ and its matching crash report under `documents/`. These are Kindle-generated fil
 they may contain device/session data and should not be committed or posted publicly.
 Run Stop Dashboard before reopening after a crash. Dashboard's startup and activity
 logs are in `extensions/dashboard/logs/`.
+
+A previous direct-framebuffer opening notice could remain over the native status
+bar. That launch path has been removed. A one-time native window expose/repaint
+cleared the observed artifact; merely refreshing e-ink redisplays the same dirty
+pixels. No repeated repaint loop or additional runtime dependency is required.

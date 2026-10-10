@@ -1,14 +1,4 @@
 #!/bin/sh
-display_opening() {
-    if [ "$MOCK_MODE" = 1 ]; then log 'MOCK opening screen'; return; fi
-    [ "$(probe lipc-get-prop com.lab126.powerd state)" = active ] || return 0
-    command -v "$EIPS_BIN" >/dev/null 2>&1 || return 0
-    # Stay below native chrome: clearing the whole framebuffer leaves unchanged
-    # system icons erased because the framework may only repaint damaged areas.
-    "$EIPS_BIN" 2 14 'Opening Dashboard...' >/dev/null 2>&1 || :
-    "$EIPS_BIN" 2 15 'Please wait.' >/dev/null 2>&1 || :
-}
-
 display_notice() {
     if [ "$MOCK_MODE" = 1 ]; then log "MOCK notice: $*"; return 0; fi
     # Never place an error notice on the native lockscreen.

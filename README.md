@@ -68,6 +68,14 @@ Setup creates a matching private `server/.env` and `dist/private/kindle-dashboar
 
 Open `http://YOUR_NAS_IP:8080/` and connect with the token from `.env`. Enable live collectors and configure provider keys using the [deployment guide](docs/setup.md). Missing integrations display as unavailable; production never falls back to invented values. On TrueNAS, use the documented dataset permissions and host-export procedure.
 
+Prebuilt NAS images are also published for **linux/amd64** and **linux/arm64**:
+
+```sh
+docker pull ghcr.io/zihengjackchen/kindle-dashboard:latest
+```
+
+The image accepts the same environment variables and `/data` and `/state` mounts as the supplied Compose file. [Container package](https://github.com/zihengjackchen/kindle-dashboard/pkgs/container/kindle-dashboard).
+
 ### 2. Install on the Kindle
 
 1. Run [diagnostics](docs/diagnostics.md) before enabling model-specific features.

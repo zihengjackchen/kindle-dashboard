@@ -284,3 +284,24 @@ without a server update.
 - 109 focused server/power tests passed; ShellCheck checks and both editor and
   Kindle app browser checks passed. NAS accepts and displays foreground policy.
 - Private rollback files: .tools/kindle-before-foreground-20261010/.
+
+## Native alarm preparation, 2026-10-11
+
+- Read-only SSH inspection confirmed native powerButton/rtcWakeup properties,
+  the max77696 platform relative alarm configuration, and historical kernel mem
+  suspend/resume entries. This is not an alarm wake test.
+- Added a disabled one-cycle experiment, exact model/firmware/kernel guards,
+  native readyToSuspend alarm timing, bounded reports, verified Stop handling,
+  and a launch interlock. No recurring refresh/sleep loop is enabled.
+- 63 client/power/launcher/experiment regression tests passed, 1 skipped. After
+  checking KOReader's actual wakeupFromSuspend event mapping, the final alarm
+  suite passed 29 tests, including simulated duplicate-ready and resume events.
+- ShellCheck warning-level checks passed. Installed the five changed/new shell
+  files over SFTP, preserving private config. Native shell syntax checks and
+  the installed read-only --check succeeded. No power write was made.
+- Device remained active with preventScreenSaver=1; existing foreground app was
+  not stopped. No NAS code/configuration/layout changes were required.
+- Hardware experiment remains pending the user's lockscreen preference and
+  physical availability to recover SSH. KOSSH can terminate on power-button sleep.
+- Rollback files: .tools/kindle-before-alarm-20261011/. Read-only evidence:
+  .tools/native-alarm-readonly.txt. See native-sleep.md for the experiment/recovery.

@@ -20,6 +20,10 @@ informational and cannot keep the Kindle awake.
 Normal power-button sleep/wake is unchanged and can display Amazon's ad
 lockscreen. Stop does not blank or replace that lockscreen.
 
+The optional [native sleep experiment](native-sleep.md) has its own verified PID.
+Stop Dashboard terminates it. An already accepted native one-shot alarm may still
+wake the CPU once; Stop does not clear shared RTC alarms or unlock the screen.
+
 ## Disable all dashboard drawing over USB
 
 1. Connect USB. Create an empty `dashboard-disable` file at the USB drive root,

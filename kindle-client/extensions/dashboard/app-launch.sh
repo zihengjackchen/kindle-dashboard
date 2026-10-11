@@ -3,6 +3,10 @@
 DASHBOARD_DIR=$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd) || exit 1
 . "$DASHBOARD_DIR/lib/client.sh"
 . "$DASHBOARD_DIR/lib/httpd.sh"
+if [ -d "$STATE_DIR/native-sleep-test.lock" ]; then
+    fail 'Native sleep test is running; use Stop Dashboard before reopening'
+    exit 1
+fi
 # The document shell integration returns Home when its child exits. Starting
 # Mesquite before that transition lets appmgr cancel the new application's load.
 # Detach first so both document and KUAL launchers can finish their lifecycle.
@@ -40,6 +44,7 @@ trap startup_exit 0
 if [ -f "$LOG_DIR/startup.log" ] && [ "$(wc -c < "$LOG_DIR/startup.log")" -ge "$MAX_LOG_BYTES" ]; then mv -f "$LOG_DIR/startup.log" "$LOG_DIR/startup.log.1"; fi
 exec 2>> "$LOG_DIR/startup.log"
 check_enabled || exit 1
+[ ! -d "$STATE_DIR/native-sleep-test.lock" ] || exit 1
 # Detect capabilities before registering anything or changing light/power.
 for app_command in sqlite3 lipc-get-prop lipc-set-prop mesquite curl cksum; do
     command -v "$app_command" >/dev/null 2>&1 || { fail "App requires $app_command; use KUAL Refresh as fallback"; exit 1; }

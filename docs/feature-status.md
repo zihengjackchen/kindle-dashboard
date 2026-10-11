@@ -1,4 +1,4 @@
-# Requested features: status on 2026-10-10
+# Requested features: status on 2026-10-11
 
 | Request | Status |
 | --- | --- |
@@ -19,7 +19,7 @@
 | Frontlight zero on entry and restoration on exit | Implemented; true LED-off is not verified on this older model |
 | Continuous foreground display on battery or USB | Enabled on the installed device; owned native sleep hold and X exit tested. Overnight endurance remains unmeasured |
 | Unplugged low-battery behavior | Foreground refresh slows below 20%; native sleep remains in charge |
-| Automatic suspend and scheduled hardware wake | Not implemented; RTC presence is not a completed device wake test |
+| Automatic suspend and scheduled hardware wake | Production refresh loop not enabled. Guarded [one-cycle native alarm test](native-sleep.md) implemented; physical alarm wake still unverified |
 | Portfolio integration with Robinhood/Fidelity | Future; no account connection or provider contract configured |
 | Stock analysis / buying signals | Future; no strategy or analysis provider specified |
 | ChatGPT usage | Removed as requested |

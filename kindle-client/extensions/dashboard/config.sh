@@ -58,3 +58,9 @@
 : "${VERIFIED_EXTERNAL_POWER_PATH:=}"
 # Older Paperwhites may need this verified sysfs path for true light-off.
 : "${VERIFIED_FRONTLIGHT_PATH:=}"
+# One-cycle native alarm experiment only, disabled by default. These identifiers
+# are compared exactly before any power write; see docs/native-sleep.md.
+: "${NATIVE_ALARM_EXPERIMENT:=0}"
+: "${NATIVE_ALARM_MODEL:=}"
+: "${NATIVE_ALARM_FIRMWARE:=}"
+: "${NATIVE_ALARM_KERNEL:=}"

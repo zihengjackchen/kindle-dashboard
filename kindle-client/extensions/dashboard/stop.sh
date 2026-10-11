@@ -3,6 +3,14 @@ DASHBOARD_DIR=$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd) || exit 1
 # shellcheck source=lib/client.sh
 . "$DASHBOARD_DIR/lib/client.sh"
 . "$DASHBOARD_DIR/lib/app-power.sh"
+# Stop the optional experiment by verified process ownership, including when
+# the recovery switch is present. An already accepted native alarm may fire once.
+test_pid=$(read_first "$STATE_DIR/native-sleep-test.lock/pid")
+if is_uint "$test_pid" && [ -r "/proc/$test_pid/cmdline" ] &&
+    tr '\000' '\n' < "/proc/$test_pid/cmdline" | grep -F -x "$DASHBOARD_DIR/test-native-sleep.sh" >/dev/null; then
+    kill -TERM "$test_pid" 2>/dev/null || :
+    log 'Stop requested for native sleep experiment; any accepted one-shot alarm remains native-owned'
+fi
 # Revoke bridge access immediately, even while a download is in progress.
 rm -f "$STATE_DIR/app-key"
 app_power_release

@@ -58,8 +58,10 @@ only a diagnostic-confirmed brightness path. The installed device now uses
 is foreground, on battery or USB. Public defaults remain opt-in. Native X/Stop
 releases the hold; a real power-button sleep is respected. Plugged-only mode is
 also available through `KEEP_AWAKE_PLUGGED=1` with the battery flag off. No raw
-suspend, scheduled RTC wake, boot changes or ad-lockscreen replacement is installed.
+suspend, production sleep/wake scheduler, boot changes or ad-lockscreen replacement is enabled.
 Ordinary app timers do not wake a suspended Kindle. See [power behavior](docs/kindle-app.md).
+A disabled-by-default [native alarm experiment](docs/native-sleep.md) can test one
+sleep/wake cycle; it is not yet a periodic sleep/refresh mode.
 
 ## Architecture
 

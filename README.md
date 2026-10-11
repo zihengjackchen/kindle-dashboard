@@ -4,11 +4,13 @@
 
 ![Kindle Dashboard with weather, markets, server health and a Markdown page](docs/showcase/hero.png)
 
-[Get started](#get-started) · [Screenshot gallery](docs/showcase/README.md) · [Layout editor](docs/dashboard-editor.md) · [Kindle installation](docs/kindle-app.md) · [Power & recovery](#power-and-recovery)
+[Download client](https://github.com/zihengjackchen/kindle-dashboard/releases/latest) · [Get started](#get-started) · [Screenshot gallery](docs/showcase/README.md) · [Layout editor](docs/dashboard-editor.md) · [Kindle installation](docs/kindle-app.md) · [Power & recovery](#power-and-recovery)
 
 Open **Dashboard** from the Kindle library or KUAL. Tap **Previous / Next** to change pages, **Refresh** to fetch every page in one request, and the native **X** to return Home. Cached pages keep working when the network doesn't.
 
 > Hardware-tested on a 1072 × 1448 Paperwhite running firmware **5.16.2.1.1**. Other models need diagnostics first. Amazon Special Offers and the normal lockscreen are untouched. Continuous visibility uses an opt-in foreground sleep hold; deep sleep with the dashboard visible is **not implemented**.
+
+[Launch showcase: storyboard, poster and editable video project](brag-output/README.md)
 
 ## Make it yours
 
@@ -50,6 +52,8 @@ You need a jailbroken Kindle with KUAL and a compatible Mesquite/scriptlet launc
 Clone this repository, then from its root:
 
 ```sh
+git clone https://github.com/zihengjackchen/kindle-dashboard.git
+cd kindle-dashboard
 python3 -m venv .venv
 . .venv/bin/activate
 pip install -r server/requirements.txt

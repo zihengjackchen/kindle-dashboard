@@ -7,6 +7,8 @@ The film shows actual renderer output, the real web editor, and a simulated tap
 on the real client interface. All metrics are synthetic; device frames are
 illustrations. The soundtrack is an original, locally synthesized score.
 
+[![Launch showcase poster](brag.jpg)](composition/index.html)
+
 ## Preview and rebuild
 
 Requires Node.js 22+, a Chromium browser, FFmpeg and FFprobe. These tools are for
@@ -29,8 +31,8 @@ npm run render -- --quality delivery --output ../brag.mp4
 ffmpeg -ss 2 -i ../brag.mp4 -frames:v 1 -q:v 2 ../brag.jpg
 ```
 
-The release video uses the settled hook at two seconds as its poster, also baked
-into frame zero so players can show a useful thumbnail. The editable source and
+Use the settled hook at two seconds as the poster, and bake it into frame zero
+so players can show a useful thumbnail. The included `brag.jpg` previews that beat. The editable source and
 storyboard remain in Git. See [asset provenance](composition/assets/NOTICE.md).
 
 - [Storyboard](brag-plan.md)

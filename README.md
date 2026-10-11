@@ -50,15 +50,16 @@ Installed and tested on a **1072 × 1448 Paperwhite, firmware 5.16.2.1.1**.
 The owner confirmed document launch, Next, Close, and reopening after the tap
 crash and launcher handoff fixes. The local bridge fetches and displays NAS images
 at the measured app canvas size. True light-off, overnight power consumption,
-and continuous-display behavior still require hardware measurement.
+and overnight continuous-display endurance still require hardware measurement.
 
 Older Paperwhites can remain faintly lit at native brightness zero. True off uses
-only a diagnostic-confirmed brightness path. Plugged-in continuous-display support
-is implemented behind `KEEP_AWAKE_PLUGGED=0`; enable only after the native power
-properties are verified. Unknown foreground/power states fail closed. No raw
-suspend writes, RTC wake schedule, boot integration, framework shutdown, or ad
-lockscreen replacement is installed. Ordinary app timers do not wake a suspended
-Kindle. See the exact checks and recovery steps in [kindle-app.md](docs/kindle-app.md).
+only a diagnostic-confirmed brightness path. The installed device now uses
+`KEEP_AWAKE_ON_BATTERY=1`: Dashboard holds off idle sleep while its native window
+is foreground, on battery or USB. Public defaults remain opt-in. Native X/Stop
+releases the hold; a real power-button sleep is respected. Plugged-only mode is
+also available through `KEEP_AWAKE_PLUGGED=1` with the battery flag off. No raw
+suspend, scheduled RTC wake, boot changes or ad-lockscreen replacement is installed.
+Ordinary app timers do not wake a suspended Kindle. See [power behavior](docs/kindle-app.md).
 
 ## Architecture
 
@@ -131,7 +132,7 @@ DejaVu fonts. Examples under `docs/previews/` are explicitly labeled sample data
 - Old image: check Wi-Fi, NAS reachability, bearer token and source freshness in
   the editor's diagnostic panel. Failure intentionally retains the cache.
 - Dim glow: native level zero may not mean true off; verify the hardware path.
-- Sleeps while plugged in: keep-awake is disabled until device validation.
+- Idle sleep while Dashboard is open: check `KEEP_AWAKE_ON_BATTERY` and the last reported power policy. Close/reopen after changing local configuration.
 - No Backblaze widget data: run the host exporter and check the Cloud Sync task.
 
 MIT license for this project's code. External projects are references; see

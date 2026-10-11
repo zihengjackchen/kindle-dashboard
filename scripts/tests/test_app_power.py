@@ -87,3 +87,42 @@ def test_native_json_cable_state_is_not_battery_online(setup):
     '''
     result=subprocess.run([SH,'-c',body],env=env,capture_output=True,text=True,timeout=15)
     assert result.returncode==0,result.stderr
+
+
+def test_foreground_policy_holds_on_battery_and_restores_native_sleep(setup):
+    env,*_=setup
+    body='''
+    . "$DASHBOARD_DIR/lib/client.sh"
+    . "$DASHBOARD_DIR/lib/app-power.sh"
+    MOCK_MODE=0
+    KEEP_AWAKE_PLUGGED=0
+    KEEP_AWAKE_ON_BATTERY=1
+    inhibited=0
+    app=org.kindledashboard.app
+    phase=active
+    probe() {
+        if [ "$1" = lipc-get-prop ]; then
+            case "$3" in preventScreenSaver) echo "$inhibited" ;; isUsbConnected) echo 0 ;; activeApp) echo "$app" ;; state) echo "$phase" ;; esac
+        elif [ "$3" = preventScreenSaver ]; then inhibited=$4; fi
+    }
+    app_power_update
+    [ "$inhibited" = 1 ] || exit 11
+    [ "$(cat "$STATE_DIR/prior-inhibit")" = 0 ] || exit 12
+    # Real sleep must never be undone; an event without sleep can reacquire.
+    app_power_release
+    phase=screenSaver
+    app_power_update
+    [ "$inhibited" = 0 ] || exit 13
+    phase=active
+    app_power_update
+    [ "$inhibited" = 1 ] || exit 14
+    app=com.lab126.booklet.home
+    app_power_update
+    [ "$inhibited" = 0 ] || exit 15
+    app=org.kindledashboard.app
+    KEEP_AWAKE_ON_BATTERY=0
+    app_power_update
+    [ "$inhibited" = 0 ] || exit 16
+    '''
+    result=subprocess.run([SH,'-c',body],env=env,capture_output=True,text=True,timeout=15)
+    assert result.returncode==0,result.stderr

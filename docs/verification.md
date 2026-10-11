@@ -266,3 +266,21 @@ without a server update.
   charger verification. No RTC alarm/suspend experiment was performed.
 - NAS source rollback archive: /mnt/Main/kindle-dashboard/widgets-before-20261010.tar.gz.
   Kindle originals are retained locally in .tools/kindle-before-widgets-20261010/.
+
+## Foreground idle-sleep fix, 2026-10-10
+
+- Enabled KEEP_AWAKE_ON_BATTERY=1 and KEEP_AWAKE_PLUGGED=1 in the device's private
+  configuration and the configured reinstall package. Public defaults remain opt-in.
+- Read KOSSH's installed script: it holds preventScreenSaver and emits a HAL
+  powerButtonPressed event when stopping SSH. The new one-shot five-second check
+  avoids leaving Dashboard uninhibited when that event did not cause native sleep.
+- On-device test cleared the pre-existing SSH hold so it could not mask the result.
+  Dashboard acquired 0 -> 1 with prior-inhibit=0 while the device was on battery.
+- Injected the event into Dashboard's FIFO: native hold became 0, then returned to
+  1 after the still-awake check. Native appmgr close (top X) released it to 0 and
+  removed ownership state. Reopening acquired 1 again and fetched a fresh bundle.
+- No physical power-button cycle or overnight endurance test was performed.
+  The app was left open with its own hold enabled. No RTC alarms or raw suspend.
+- 109 focused server/power tests passed; ShellCheck checks and both editor and
+  Kindle app browser checks passed. NAS accepts and displays foreground policy.
+- Private rollback files: .tools/kindle-before-foreground-20261010/.

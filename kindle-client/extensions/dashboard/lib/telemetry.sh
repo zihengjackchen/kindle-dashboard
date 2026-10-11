@@ -19,7 +19,8 @@ append_telemetry() {
     case "$external" in 0|1) REQUEST_URL="$REQUEST_URL&external_power=$external" ;; esac
     inhibit=$(probe lipc-get-prop com.lab126.powerd preventScreenSaver)
     case "$inhibit" in 0|1) REQUEST_URL="$REQUEST_URL&sleep_inhibited=$inhibit" ;; esac
-    if [ "$KEEP_AWAKE_PLUGGED" = 1 ]; then policy=plugged-in; else policy=native-sleep; fi
+    if [ "$KEEP_AWAKE_ON_BATTERY" = 1 ]; then policy=foreground;
+    elif [ "$KEEP_AWAKE_PLUGGED" = 1 ]; then policy=plugged-in; else policy=native-sleep; fi
     REQUEST_URL="$REQUEST_URL&power_policy=$policy"
     up=$(cut -d. -f1 /proc/uptime 2>/dev/null)
     is_uint "$up" && REQUEST_URL="$REQUEST_URL&uptime_seconds=$up"

@@ -22,9 +22,10 @@ turn the radio off between image fetches. Automatic page rotation is optional
 and switches already-cached images without additional downloads.
 
 Deep suspend, RTC alarms and CPU governor changes are **not implemented**.
-`KEEP_AWAKE_PLUGGED=0` remains the default and the installed setting. With normal
-sleep enabled, the Amazon lockscreen may replace the app. This is not yet a
-validated combination of uninterrupted 24/7 visibility and low battery drain.
+The installed setting now enables `KEEP_AWAKE_ON_BATTERY=1` for continuous
+foreground display on battery or USB. Public defaults remain disabled. Native
+X/Stop restores ordinary sleep; a real power-button sleep is respected. This is
+not deep sleep and does not establish low-drain or overnight runtime claims.
 
 The October 9 live audit found KOSSH running
 with `preventScreenSaver=1`. KOSSH also redraws its address every three seconds.

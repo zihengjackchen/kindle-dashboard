@@ -51,6 +51,9 @@
 # Keep disabled until activeApp, powerd state/external power and this property
 # have been verified on the physical Kindle. Applies only while plugged in.
 : "${KEEP_AWAKE_PLUGGED:=0}"
+# Explicit opt-in for continuous foreground display on battery as well as USB.
+# This prevents idle sleep, not native power-button sleep or low-battery shutdown.
+: "${KEEP_AWAKE_ON_BATTERY:=0}"
 # Optional device-verified external power indicator (not battery/online).
 : "${VERIFIED_EXTERNAL_POWER_PATH:=}"
 # Older Paperwhites may need this verified sysfs path for true light-off.

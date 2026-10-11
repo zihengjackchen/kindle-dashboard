@@ -16,7 +16,7 @@ class DashboardRequest(BaseModel):
     charging: bool | None = None
     external_power: bool | None = None
     sleep_inhibited: bool | None = None
-    power_policy: Literal["native-sleep", "plugged-in"] | None = None
+    power_policy: Literal["native-sleep", "plugged-in", "foreground"] | None = None
     device: str = Field(default="unknown", max_length=80, pattern=r"^[A-Za-z0-9._-]+$")
     device_id: str | None = Field(default=None, min_length=1, max_length=80, pattern=r"^[A-Za-z0-9._-]+$")
     rssi: int | None = Field(default=None, ge=-127, le=-1)

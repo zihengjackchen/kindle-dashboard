@@ -10,7 +10,7 @@ mkdir "$STATE_DIR/app.lock" 2>/dev/null || exit 1
 app_cleanup() {
     app_power_release
     app_light_restore
-    for child in "$HTTP_PID" "$EVENT_PID" "$CHECK_PID"; do
+    for child in "$HTTP_PID" "$EVENT_PID" "$CHECK_PID" "$BUTTON_PID"; do
         [ -z "$child" ] || kill "$child" 2>/dev/null || :
     done
     probe lipc-set-prop com.lab126.appmgrd stop app://org.kindledashboard.app >/dev/null || :
@@ -21,7 +21,7 @@ app_cleanup() {
     rmdir "$STATE_DIR/app.lock" 2>/dev/null || :
     log 'App closed; bridge and native event listener stopped; prior light and power restored'
 }
-HTTP_PID='' EVENT_PID='' CHECK_PID='' RUNTIME=''
+HTTP_PID='' EVENT_PID='' CHECK_PID='' BUTTON_PID='' RUNTIME=''
 trap app_cleanup 0
 trap 'exit 0' TERM INT HUP
 printf '%s\n' "$$" > "$STATE_DIR/app.pid"
@@ -72,7 +72,22 @@ while IFS= read -r native_event <&3; do
     event_name=${native_event%% *}
     case "$event_name" in
         listener-ended) log 'ERROR native event listener ended; restoring normal power policy'; break ;;
-        powerButtonPressed) log 'Native power button: release app sleep hold'; app_power_release; manual_sleep=1; continue ;;
+        powerButtonPressed)
+            log 'Power button event: release app hold, then verify native sleep state'
+            app_power_release; manual_sleep=1
+            if [ -z "$BUTTON_PID" ] || ! kill -0 "$BUTTON_PID" 2>/dev/null; then
+                # KOSSH also emits this event when stopping SSH without sleeping.
+                # One delayed check distinguishes that case from native sleep.
+                (
+                    button_sleep=
+                    trap '[ -z "$button_sleep" ] || kill "$button_sleep" 2>/dev/null; exit 0' TERM INT HUP
+                    sleep 5 & button_sleep=$!; wait "$button_sleep"
+                    printf 'power-button-check\n' >&3
+                ) &
+                BUTTON_PID=$!
+            fi
+            continue ;;
+        power-button-check) BUTTON_PID=''; manual_sleep=0 ;;
         outOfScreenSaver|resuming) log "Native wake event=$event_name"; manual_sleep=0 ;;
         appStarted|appPaused|appStateChange|processExited|goingToScreenSaver|readyToSuspend|suspending|usbPlugIn|usbPlugOut|charging|notCharging|startup-check|audit) ;;
         *) continue ;;

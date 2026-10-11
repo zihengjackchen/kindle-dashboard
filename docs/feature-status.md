@@ -17,7 +17,7 @@
 | Page ordering, optional rotation, refresh/night intervals | Implemented while app is awake |
 | Reduced polling / no frequent browser heartbeat | Implemented; native events with a 30-minute fallback audit |
 | Frontlight zero on entry and restoration on exit | Implemented; true LED-off is not verified on this older model |
-| Continuous visibility while plugged in | Scoped sleep hold exists; remains disabled pending charger verification |
+| Continuous foreground display on battery or USB | Enabled on the installed device; owned native sleep hold and X exit tested. Overnight endurance remains unmeasured |
 | Unplugged low-battery behavior | Foreground refresh slows below 20%; native sleep remains in charge |
 | Automatic suspend and scheduled hardware wake | Not implemented; RTC presence is not a completed device wake test |
 | Portfolio integration with Robinhood/Fidelity | Future; no account connection or provider contract configured |

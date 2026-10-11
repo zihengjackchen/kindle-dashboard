@@ -226,7 +226,7 @@ def draw_device(card,data,now,fields):
     for key in ("external_power", "sleep_inhibited"):
         value=getattr(data,key,None)
         values[key]="Yes" if value is True else "No" if value is False else "Unknown"
-    values["power_policy"]={"native-sleep":"Native sleep", "plugged-in":"Stay on when plugged"}.get(data.power_policy,"Unknown")
+    values["power_policy"]={"native-sleep":"Native sleep", "plugged-in":"Stay on when plugged", "foreground":"Stay on in app"}.get(data.power_policy,"Unknown")
     for key in fields:
         if key not in values: values[key]=show(getattr(data,key,None))
     labels={"rssi":"Wi-Fi signal", "charging":"Power", "frontlight":"Frontlight", "uptime_seconds":"Uptime (s)",

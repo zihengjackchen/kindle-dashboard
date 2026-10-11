@@ -98,26 +98,31 @@ After confirming the hardware path and actual light behavior, set
 `VERIFIED_FRONTLIGHT_PATH` in `config.local.sh`. The script saves/restores both raw
 brightness and the native level. No arbitrary sysfs discovery writes occur.
 
-`KEEP_AWAKE_PLUGGED=0` is deliberately the shipped default. After observing the
-exact properties on the device, `1` enables a reversible foreground-only request
-through `powerd.preventScreenSaver`, while external power is detected. Firmware
-5.16.2.1.1 lacks `powerd.isUsbConnected`; set `VERIFIED_EXTERNAL_POWER_PATH` to a
-plug/unplug-tested sysfs indicator instead. On the inspected device,
-`max77696-charger/online` is 1 even with USB `present` at 0: do not use that online
-field. The candidate `/sys/class/power_supply/max77696-uic/present` still needs a
-physical plug/unplug check before enabling the installed option.
+Public defaults keep both sleep-hold options disabled. The configured installation
+now has `KEEP_AWAKE_ON_BATTERY=1` and `KEEP_AWAKE_PLUGGED=1`. The battery option
+requests a reversible native `preventScreenSaver` hold whenever Dashboard is the
+active foreground app, regardless of cable state. It consumes more energy than
+suspend. This controls idle sleep only; it does not change native critical-battery
+handling, the lockscreen or Special Offers.
 
-The supervisor watches appmgrd, powerd and HAL events. It releases its inhibitor
-on unplug, leaving the app, manual power-button events, native sleep, Stop or kill
-switch detection. An inhibitor already held by another program is not claimed or
-reset. A 30-minute audit is only a fallback; normal exit/unplug handling is event
-based. Manual sleep is not undone automatically; wake lifecycle/events restore
-normal dashboard operation. The power button and unplug sequence require physical
-acceptance with KOSSH stopped, because KOSSH itself inhibits sleep. `activeApp` must match this app
-and `powerd.state` must be `active`; unknown values fail closed. This controls an
-open app session; it does not unload ads, draw on the lockscreen, or modify Special
-Offers. It uses more power than native suspend. Do not advertise 24/7 visibility
-until an overnight plugged-in test and unplug/Close recovery test pass.
+For plugged-only behavior, set `KEEP_AWAKE_ON_BATTERY=0` and
+`KEEP_AWAKE_PLUGGED=1`. The device uses `battStateInfo.usb` when `isUsbConnected`
+is unavailable. Unknown external power permits native sleep in plugged-only mode.
+Set both flags to zero for ordinary idle sleep. Close/reopen after changing them.
+
+The supervisor releases its owned hold on native X/Stop, leaving the app, sleep,
+power-button events and kill-switch detection. Unplugging releases it only in
+plugged-only mode. An existing hold from another app is not claimed or reset.
+The SSH launcher KOSSH sends a power-button event even when merely stopping SSH.
+A one-time check five seconds later reacquires the hold only if powerd is still
+active and Dashboard remains foreground. Actual native sleep is left alone.
+This is event-driven, with the existing 30-minute audit as a fallback.
+
+On-device checks verified acquisition from 0 to 1 on battery, release after a
+button event, reacquisition after the still-awake check, native X release to 0,
+and reacquisition after reopening. The event was injected into Dashboard's own
+FIFO to avoid stopping the SSH test connection; a physical power-button cycle and
+overnight endurance are not claimed as tested.
 
 Run KUAL **Show Diagnostics**, then provide `logs/diagnostics.txt` and
 `logs/dashboard.log`. Also report whether the light is completely dark at entry,

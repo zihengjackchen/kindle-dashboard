@@ -3,9 +3,12 @@
 A 20-second product film created using the [brag skill](https://github.com/latent-spaces/brag)
 and [Hyperframes](https://github.com/heygen-com/hyperframes).
 
-The film shows actual renderer output, the real web editor, and a simulated tap
-on the real client interface. All metrics are synthetic; device frames are
-illustrations. The soundtrack is an original, locally synthesized score.
+The film uses a real Kindle framebuffer capture and screenshots from the running
+NAS editor. The device casing is illustrated. The Kindle capture is from October
+10, 2026; NAS captures are from October 11. The SSH banner is cropped, and the
+editor uses an unsaved draft that omits private account usage. There is no fabricated
+on-device page transition. [Capture provenance](../docs/showcase/live/README.md).
+The soundtrack is an original, locally synthesized score.
 
 [![Launch showcase poster](brag.jpg)](composition/index.html)
 
@@ -16,7 +19,7 @@ the showcase only; the Kindle app and NAS server do not depend on them.
 
 ```sh
 # From the repository root, after installing the Python/browser dev dependencies:
-python scripts/build-showcase.py
+python scripts/build-real-showcase.py
 python scripts/build-brag-assets.py
 cd brag-output/composition
 npm run check
@@ -39,6 +42,6 @@ storyboard remain in Git. See [asset provenance](composition/assets/NOTICE.md).
 - [Composition brief](composition-brief.md)
 - [Share copy](share-copy.txt)
 
-The Hyperframes audit passed runtime, layout and all 19 sampled text contrast
-checks. Its six advisory lint warnings concern keeping four short scenes in one
-file and reusing the weather PNG; there are no runtime or visual audit errors.
+The Hyperframes audit covers runtime, layout and text contrast. Short scenes stay
+in one source file, and the genuine Kindle capture is intentionally reused for
+the opening and app-controls scenes.

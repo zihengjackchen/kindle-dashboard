@@ -1,5 +1,8 @@
 # Screenshot gallery
 
+For the running installation, see the [real Kindle and NAS captures](live/README.md).
+The reproducible examples below use sample data.
+
 These images come from the real Pillow renderer, browser editor, and Kindle app
 HTML. Every metric is **synthetic sample data**. They are not photographs of a
 physical Kindle; the hero uses an illustrated frame, and the client screenshot

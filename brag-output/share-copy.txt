@@ -4,4 +4,4 @@ Kindle Dashboard puts weather, markets, Markdown and home-server health on a Kin
 
 Self-hosted on your NAS. Open source. Built for a jailbroken Kindle.
 
-Demo screens use sample data. Continuous visibility requires a foreground sleep hold; dashboard-preserving deep sleep is not supported.
+Screens show the running installation; capture dates and privacy edits are documented, and the casing is illustrated. Continuous visibility requires a foreground sleep hold; dashboard-preserving deep sleep is not supported.

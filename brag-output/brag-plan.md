@@ -16,7 +16,7 @@
 
 Background #f4f5ef, ink #23332c, muted #627268, accent #dced8b.
 Sans-serif display and body, matching the existing editor. Landscape 1920×1080.
-All screens use synthetic fixtures. Device outlines are illustrations, not photos.
+Use the real October 10 Kindle framebuffer capture and October 11 NAS/editor captures. Device outlines are illustrations, not photos. The SSH address banner is cropped and account usage is omitted from the unsaved editor preview.
 Do not claim dashboard-preserving suspend, measured battery life, brokerage access,
 or support for all Kindle models. Special Offers are untouched.
 
@@ -24,15 +24,15 @@ or support for all Kindle models. Special Offers are untouched.
 
 | Time | Beat | Visual and readable text | Motion / audio |
 | --- | --- | --- | --- |
-| 0–4 | Hook | Actual overview in a device frame. “A quieter place for your day.” | Frame enters from right; headline settles quickly. Soft original music begins. |
+| 0–4 | Hook | Real Kindle screen, including native chrome, in a Kindle casing. “A quieter place for your day.” | Frame enters from right; headline settles quickly. Soft original music begins. |
 | 4–10 | Editor | Actual widget editor. “Arrange it your way.” “Choose widgets. Pick the details.” | UI settles into a large panel, gentle push-in. Small click accent. |
-| 10–16 | Use it | Actual client screen and a transition to a cached weather page. “One refresh. Every page.” “Browse your cached pages offline.” | Simulated pointer taps Next; next screenshot replaces the image. Click aligned to tap. |
-| 16–20 | Outro | Weather, Markdown and NAS pages. “Kindle Dashboard” / “Self-hosted. Yours to arrange.” | Three pages arrive sequentially then hold; music resolves and fades. |
+| 10–16 | Use it | Actual Kindle client screen; retain the captured pixels without fabricating a page change. “One refresh. Every page.” “Browse your cached pages offline.” | Gently move the device frame while the genuine captured UI remains visible. |
+| 16–20 | Outro | Real weather, markets and NAS preview PNGs. “Kindle Dashboard” / “Self-hosted. Yours to arrange.” | Three pages arrive sequentially then hold; music resolves and fades. |
 
 ## Music cue guidance
 
 Generate a deterministic original score locally at 96 BPM. Use natural scene
-timing for readability; page change at 13.125 seconds lands on the beat grid.
+timing for readability; the native controls remain visible long enough to inspect.
 Audio-reactivity: none; the still, paper-like presentation is deliberate. No
 bundled music is redistributed because its exact licensing is undocumented.
 

@@ -2,7 +2,7 @@
 
 **A quieter place for your day.** A self-hosted dashboard for a jailbroken Kindle: weather, markets, home-server health, Markdown, and more. Design pages in your browser; the NAS renders them for e-ink.
 
-![Kindle Dashboard with weather, markets, server health and a Markdown page](docs/showcase/hero.png)
+![Kindle Dashboard with weather, markets, server health and a Markdown page](docs/showcase/live/hero.png)
 
 [Download client](https://github.com/zihengjackchen/kindle-dashboard/releases/latest) · [Get started](#get-started) · [Screenshot gallery](docs/showcase/README.md) · [Layout editor](docs/dashboard-editor.md) · [Kindle installation](docs/kindle-app.md) · [Power & recovery](#power-and-recovery)
 
@@ -12,18 +12,22 @@ Open **Dashboard** from the Kindle library or KUAL. Tap **Previous / Next** to c
 
 [Launch showcase: storyboard, poster and editable video project](brag-output/README.md)
 
+## Running on a real Kindle
+
+The hero uses a real framebuffer capture from the tested Paperwhite, including its native title bar, X and navigation. The casing is illustrated; the SSH banner is cropped. [Real device and NAS captures, with dates](docs/showcase/live/README.md).
+
 ## Make it yours
 
 <table>
-<tr><td width="33%"><a href="docs/showcase/overview.png"><img src="docs/showcase/overview.png" alt="Everyday overview" width="100%"></a><b>Your everyday overview</b><br>Weather, watchlist, backup and battery.</td><td width="33%"><a href="docs/showcase/markets.png"><img src="docs/showcase/markets.png" alt="Three-column market watchlist" width="100%"></a><b>A dedicated watchlist</b><br>Stocks, ETFs and crypto in multiple columns.</td><td width="33%"><a href="docs/showcase/home-server.png"><img src="docs/showcase/home-server.png" alt="Home server and backup diagnostics" width="100%"></a><b>Your home server</b><br>Storage, CPU, memory and backup status.</td></tr>
-<tr><td><a href="docs/showcase/weather.png"><img src="docs/showcase/weather.png" alt="Weather and daily notes" width="100%"></a><b>Weather &amp; plans</b><br>Celsius and Fahrenheit together.</td><td><a href="docs/showcase/markdown.png"><img src="docs/showcase/markdown.png" alt="Markdown agenda" width="100%"></a><b>A page of your own</b><br>Markdown headings, lists, quotes and code.</td><td><a href="docs/showcase/codex.png"><img src="docs/showcase/codex.png" alt="Synthetic Codex usage example" width="100%"></a><b>Codex account usage</b><br>Optional allowance and activity from your NAS login.</td></tr>
+<tr><td width="33%"><a href="docs/showcase/live/nas-overview.png"><img src="docs/showcase/live/nas-overview.png" alt="Everyday overview" width="100%"></a><b>Your everyday overview</b><br>Weather, watchlist, backup and battery.</td><td width="33%"><a href="docs/showcase/live/markets.png"><img src="docs/showcase/live/markets.png" alt="Three-column market watchlist" width="100%"></a><b>A dedicated watchlist</b><br>Stocks, ETFs and crypto in multiple columns.</td><td width="33%"><a href="docs/showcase/live/home-server.png"><img src="docs/showcase/live/home-server.png" alt="Home server and backup diagnostics" width="100%"></a><b>Your home server</b><br>Storage, CPU, memory and backup status.</td></tr>
+<tr><td><a href="docs/showcase/live/weather.png"><img src="docs/showcase/live/weather.png" alt="Weather and daily notes" width="100%"></a><b>Weather &amp; plans</b><br>Celsius and Fahrenheit together.</td><td><a href="docs/showcase/markdown.png"><img src="docs/showcase/markdown.png" alt="Markdown agenda" width="100%"></a><b>A page of your own</b><br>Markdown headings, lists, quotes and code.</td><td><a href="docs/showcase/codex.png"><img src="docs/showcase/codex.png" alt="Synthetic Codex usage example" width="100%"></a><b>Codex account usage</b><br>Optional allowance and activity from your NAS login.</td></tr>
 </table>
 
-All screenshots use **synthetic sample data** rendered by the actual application. Prices, usage and server metrics are examples. The hero's device frame is an illustration. [Browse all screenshots and importable layouts →](docs/showcase/README.md)
+The overview, weather, markets and NAS images use **real data from the running service**. Markdown and Codex cards remain labeled **sample-data examples**. The hero and editor use **real captures** from the running installation. The device casing is an illustration; [capture dates and privacy edits](docs/showcase/live/README.md) are documented. [Browse all screenshots and importable layouts →](docs/showcase/README.md)
 
 ## A browser editor, an e-ink display
 
-![Desktop editor with widget controls and a live grayscale preview](docs/showcase/editor-widgets.png)
+![Desktop editor with widget controls and a live grayscale preview](docs/showcase/live/editor-widgets.png)
 
 - **Arrange the page:** drag widgets, choose half/full width and three sizes, or assign rows and columns. Up to 12 widget instances per page, including repeated types.
 - **Choose the details:** custom titles, selectable fields, individual watchlists and backup jobs. Markdown shrinks or truncates to fit its card.

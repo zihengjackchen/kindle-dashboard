@@ -9,8 +9,9 @@ import wave
 ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / "brag-output/composition/assets"
 OUT.mkdir(parents=True, exist_ok=True)
-for name in ("overview", "weather", "markdown", "home-server", "editor-widgets", "kindle-app"):
-    shutil.copyfile(ROOT / f"docs/showcase/{name}.png", OUT / f"{name}.png")
+for source, target in (("kindle-overview", "kindle"), ("editor-widgets", "editor"),
+                       ("weather", "weather"), ("markets", "markets"), ("home-server", "server")):
+    shutil.copyfile(ROOT / f"docs/showcase/live/{source}.png", OUT / f"live-{target}.png")
 with urllib.request.urlopen("https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js", timeout=30) as r:
     (OUT / "gsap.min.js").write_bytes(r.read())
 rate = 22050

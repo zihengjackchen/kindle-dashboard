@@ -37,7 +37,7 @@ def main():
         command(['git', 'push', '-u', 'origin', 'main'])
     else:
         command([gh, 'repo', 'create', repository, '--'+args.visibility, '--source', str(ROOT), '--remote', 'origin', '--push',
-                 '--description', 'Daylight: standalone Kindle KUAL dashboard with a Docker NAS renderer and native sleep'])
+                 '--description', 'A customizable e-ink dashboard for jailbroken Kindles: NAS rendering, widgets, Markdown and offline pages'])
     print(f'https://github.com/{repository}')
     print(f'Watch checks and container publication: {gh} run list --repo {repository}')
 

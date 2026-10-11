@@ -1,0 +1,7 @@
+A quieter place for your day.
+
+Kindle Dashboard puts weather, markets, Markdown and home-server health on a Kindle you already own. Arrange widgets in a browser, refresh all pages together, and browse the cache offline.
+
+Self-hosted on your NAS. Open source. Built for a jailbroken Kindle.
+
+Demo screens use sample data. Continuous visibility requires a foreground sleep hold; dashboard-preserving deep sleep is not supported.

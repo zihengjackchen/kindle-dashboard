@@ -16,3 +16,12 @@ kindle-client/extensions/dashboard/state/*
 !kindle-client/extensions/dashboard/state/.gitkeep
 kindle-client/extensions/dashboard/logs/*
 !kindle-client/extensions/dashboard/logs/.gitkeep
+
+# Local video tooling and review artifacts
+node_modules/
+**/.hyperframes/
+brag-output/composition/snapshots/
+brag-output/composition/contact-sheet.jpg
+brag-output/composition/AGENTS.md
+brag-output/composition/CLAUDE.md
+**/.thumbnails/

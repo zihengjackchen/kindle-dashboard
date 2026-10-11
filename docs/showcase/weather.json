@@ -1,0 +1,74 @@
+{
+  "version": 1,
+  "title": "Dashboard",
+  "density": "compact",
+  "weather_units": "both",
+  "market_columns": 2,
+  "widgets": [
+    {
+      "id": "weather",
+      "key": null,
+      "title": "",
+      "row": null,
+      "column": 1,
+      "width": "full",
+      "size": "large",
+      "fields": null,
+      "content": "",
+      "overflow": "shrink",
+      "tickers": null,
+      "market_columns": null,
+      "weather_units": null,
+      "notes": null,
+      "backup_index": 0
+    },
+    {
+      "id": "notes",
+      "key": null,
+      "title": "Out the door",
+      "row": null,
+      "column": 1,
+      "width": "full",
+      "size": "medium",
+      "fields": null,
+      "content": "",
+      "overflow": "shrink",
+      "tickers": null,
+      "market_columns": null,
+      "weather_units": null,
+      "notes": [
+        "Light jacket for the morning",
+        "Take the scenic route",
+        "Sunset walk at 6:45"
+      ],
+      "backup_index": 0
+    }
+  ],
+  "tickers": [
+    "S&P 500",
+    "VOO",
+    "VGT",
+    "META",
+    "AMZN",
+    "GOOG",
+    "AMD",
+    "PYPL",
+    "SOFI",
+    "GRAB",
+    "BTC-USD",
+    "ETH-USD"
+  ],
+  "notes_title": "Agenda & notes",
+  "notes": [],
+  "pages": {},
+  "page_order": [
+    "overview",
+    "weather",
+    "markets-1",
+    "markets-2",
+    "nas"
+  ],
+  "refresh_minutes": 60,
+  "night_minutes": 240,
+  "rotation_minutes": 0
+}

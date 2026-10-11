@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><title>Kindle Dashboard</title>
+<script src="assets/gsap.min.js"></script><style>
+*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#f4f5ef;color:#23332c;font-family:sans-serif}
+#root{position:relative;width:100%;height:100%;overflow:hidden}.clip{position:absolute;inset:0;background:#f4f5ef}
+.brand{position:absolute;left:90px;top:62px;font-size:22px;font-weight:700;letter-spacing:4px}.disclosure{position:absolute;left:90px;bottom:36px;font-size:20px;color:#536358}
+.copy{position:absolute;left:90px;top:285px;width:680px}.copy h1{font-size:98px;line-height:1.04;letter-spacing:-5px;margin:0 0 34px}.copy p{font-size:32px;line-height:1.45;max-width:620px;margin:0;color:#536358}
+.frame{position:absolute;right:170px;top:74px;width:680px;padding:24px 20px 52px;background:#23332c;border-radius:38px;box-shadow:0 25px 55px #23332c25}.frame img{display:block;width:100%;border-radius:3px}
+.line{height:6px;width:140px;background:#9aaa91;margin-top:35px;transform-origin:left}
+.editor-title{position:absolute;left:90px;top:145px;width:560px}.editor-title h2{font-size:78px;line-height:1.08;letter-spacing:-3px;margin:0 0 26px}.editor-title p{font-size:32px;line-height:1.45;color:#536358}
+.editor-panel{position:absolute;left:705px;top:135px;width:1130px;padding:10px;background:#d5dcd5;border-radius:15px;box-shadow:0 22px 45px #23332c20}.editor-panel img{display:block;width:100%;border-radius:7px}
+.appframe{position:absolute;right:180px;top:55px;width:680px;padding:22px;background:#23332c;border-radius:28px}.appframe img{display:block;width:100%}.next-page{position:absolute;left:27px;right:27px;top:60px;bottom:25px;opacity:0;overflow:hidden}.next-page img{width:100%;height:100%;object-fit:fill}
+.cursor{position:absolute;width:38px;height:50px;right:256px;top:380px;filter:drop-shadow(0 3px 3px #0006)}
+.outro-title{position:absolute;left:90px;top:145px;width:700px}.outro-title h2{font-size:88px;line-height:1.07;letter-spacing:-4px;margin:0 0 30px}.outro-title p{font-size:34px;line-height:1.5;margin:0}.outro-title .tag{font-size:22px;margin-top:35px;color:#536358}
+.page{position:absolute;width:330px;padding:12px;background:#fff;box-shadow:0 20px 40px #23332c25}.page img{width:100%;display:block}.page.one{left:805px;top:130px}.page.two{left:1130px;top:265px}.page.three{left:1455px;top:400px}
+</style></head><body>
+<div data-hf-id="hf-5yb7" id="root" data-composition-id="dashboard" data-width="1920" data-height="1080" data-duration="20">
+<section data-hf-id="hf-ncud" id="hook" class="clip" data-start="0" data-duration="4" data-track-index="0">
+<div data-hf-id="hf-7ziu" class="brand">KINDLE DASHBOARD</div><div data-hf-id="hf-bdx3" class="copy"><h1 data-hf-id="hf-g6kv">A quieter place for your day.</h1><p data-hf-id="hf-5jz1">Weather, markets and your home server. On e-ink.</p><div data-hf-id="hf-np12" class="line"></div></div>
+<div data-hf-id="hf-d9wv" class="frame"><img data-hf-id="hf-q519" src="assets/overview.png" alt="Actual overview with sample data"></div><div data-hf-id="hf-6q9q" class="disclosure">Sample data / Illustrated device frame</div></section>
+<section data-hf-id="hf-pla9" id="editor" class="clip" data-start="4" data-duration="6" data-track-index="0">
+<div data-hf-id="hf-40kw" class="brand">DESIGN IT IN YOUR BROWSER</div><div data-hf-id="hf-z3za" class="editor-title"><h2 data-hf-id="hf-n02c">Arrange it your way.</h2><p data-hf-id="hf-qkb1">Choose widgets. Pick the details.</p><div data-hf-id="hf-sogq" class="line"></div></div>
+<div data-hf-id="hf-tony" class="editor-panel"><img data-hf-id="hf-qzhx" src="assets/editor-widgets.png" alt="Actual widget editor"></div><div data-hf-id="hf-1jgd" class="disclosure">Actual editor / Sample data</div></section>
+<section data-hf-id="hf-kzwh" id="browse" class="clip" data-start="10" data-duration="6" data-track-index="0">
+<div data-hf-id="hf-jqsx" class="brand">READ IT ON YOUR KINDLE</div><div data-hf-id="hf-r8s7" class="copy"><h1 data-hf-id="hf-i7et">One refresh. Every page.</h1><p data-hf-id="hf-jgvt">Browse your cached pages offline.</p><div data-hf-id="hf-t2rr" class="line"></div></div>
+<div data-hf-id="hf-0o1k" class="appframe"><img data-hf-id="hf-4t7v" src="assets/kindle-app.png" alt="Actual app controls"><div data-hf-id="hf-n1ot" class="next-page"><img data-hf-id="hf-vs7w" src="assets/weather.png" alt="Cached weather page"></div></div>
+<svg data-hf-id="hf-kjbh" class="cursor" viewBox="0 0 38 50" aria-hidden="true"><path data-hf-id="hf-5wi2" d="M3 3L33 28L20 30L14 45Z" fill="#dced8b" stroke="#23332c" stroke-width="3" /></svg><div data-hf-id="hf-4uvn" class="disclosure">Actual client UI / Simulated tap / Sample data</div></section>
+<section data-hf-id="hf-fins" id="outro" class="clip" data-start="16" data-duration="4" data-track-index="0">
+<div data-hf-id="hf-fg6b" class="brand">OPEN SOURCE / SELF-HOSTED</div><div data-hf-id="hf-vqe0" class="outro-title"><h2 data-hf-id="hf-zc5q">Kindle Dashboard</h2><p data-hf-id="hf-rox2">Self-hosted. Yours to arrange.</p><div data-hf-id="hf-th2s" class="line"></div><p data-hf-id="hf-o2c9" class="tag">For a compatible jailbroken Kindle.</p></div>
+<div data-hf-id="hf-88yx" class="page one"><img data-hf-id="hf-k0s5" src="assets/weather.png" alt="Weather"></div><div data-hf-id="hf-p8lr" class="page two"><img data-hf-id="hf-kqz3" src="assets/markdown.png" alt="Markdown"></div><div data-hf-id="hf-v7ot" class="page three"><img data-hf-id="hf-flyg" src="assets/home-server.png" alt="Home server"></div><div data-hf-id="hf-silg" class="disclosure">Sample layouts / Special Offers untouched</div></section>
+<audio data-hf-id="hf-f2mr" id="music" src="assets/paper-notes.wav" data-start="0" data-duration="20" data-track-index="10" data-volume="0.35"></audio></div>
+<script>
+const tl=gsap.timeline({paused:true});
+tl.fromTo('#hook .copy',{y:30,opacity:0},{y:0,opacity:1,duration:.5,ease:'power3.out'},.1);
+tl.fromTo('#hook .frame',{x:90,opacity:0},{x:0,opacity:1,duration:.65,ease:'power2.out'},0);
+tl.fromTo('#hook .line',{scaleX:0},{scaleX:1,duration:.6,ease:'power2.out'},.55);
+tl.fromTo('#editor .editor-title',{x:-35,opacity:0},{x:0,opacity:1,duration:.5,ease:'power3.out'},4);
+tl.fromTo('#editor .editor-panel',{y:45,opacity:0},{y:0,opacity:1,duration:.55,ease:'power2.out'},4.1);
+tl.to('#editor .editor-panel',{scale:1.025,duration:4.9,ease:'none'},4.7);
+tl.fromTo('#browse .copy',{y:30,opacity:0},{y:0,opacity:1,duration:.5,ease:'power3.out'},10);
+tl.fromTo('#browse .appframe',{x:50,opacity:0},{x:0,opacity:1,duration:.5,ease:'power2.out'},10);
+tl.fromTo('.cursor',{x:0,y:0,opacity:0},{opacity:1,duration:.2},11.5);
+tl.to('.cursor',{x:0,y:-275,duration:.9,ease:'power2.inOut'},12.1);
+// beat-locked: simulated Next tap at 13.125 seconds, original 96 BPM score.
+tl.to('.cursor',{scale:.85,duration:.1,yoyo:true,repeat:1},13.025);
+tl.to('.next-page',{opacity:1,duration:.18},13.125);
+tl.to('.cursor',{opacity:0,duration:.2},14);
+tl.fromTo('#outro .outro-title',{y:30,opacity:0},{y:0,opacity:1,duration:.5,ease:'power3.out'},16);
+tl.fromTo('#outro .page',{y:65,opacity:0},{y:0,opacity:1,stagger:.22,duration:.5,ease:'power2.out'},16.1);
+window.__timelines=window.__timelines||{};window.__timelines['dashboard']=tl;
+</script></body></html>

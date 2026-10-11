@@ -12,14 +12,14 @@ There are no model inference requests or additional Kindle network calls.
 
 In the web editor, add **Codex / ChatGPT usage**. It supports the same placement,
 width, height, custom title, duplication and field selection as other widgets.
-The installed overview includes a full-width small card with remaining allowance,
-reset time and the latest reported daily token count. Other cards were preserved.
+A useful small card shows remaining allowance, reset time and the latest reported
+daily token count. Add the widget only if you enable this integration.
 
 Available fields include primary/secondary allowance used or remaining, their
 reset times, lifetime and peak daily tokens, latest reported day tokens, current
 and longest streaks, and longest turn duration. Missing values display as unknown.
 Window durations come from the account response: there is no assumed five-hour
-window. The current NAS account reports one seven-day window and no secondary one.
+window. Accounts may return only one window; absent secondary values stay unknown.
 
 The source's sync time is always visible. Data becomes stale after two hours, or
 when a reported quota reset passes without another reading. An expired window
@@ -27,38 +27,29 @@ shows **Awaiting sync**; it is never assumed to reset to zero usage. The daily t
 label uses the provider's date, rather than silently calling it the NAS's “today.”
 Token totals describe reported account activity, not message counts or an API bill.
 
-## Installed NAS setup
+## Container setup on a NAS
 
-- Job: **Kindle Dashboard Codex usage**, every 30 minutes (TrueNAS cron job ID 2).
-- Runner: `/mnt/Main/kindle-dashboard/scripts/refresh-codex-usage-nas.sh`.
-- Reader: `scripts/export-codex-usage.py`, Python standard library only.
-- Image: `kindle-dashboard-codex:0.162.1`, an additional tag of the existing TGP
-  image. Tagging reuses its layers and leaves the TGP image and configuration alone.
-- Existing login: `/mnt/Main/tgp/secrets/codex`, mounted at `/codex` for Codex's own
-  authentication/refresh handling. No credential files are read by the exporter.
-- Output: `/mnt/Main/kindle-dashboard/server/data/codex/usage.json`.
-- Web service setting: `CODEX_USAGE_PATH=/data/codex/usage.json`.
+The optional `scripts/refresh-codex-usage-nas.sh` runner starts a short-lived
+container containing Python 3 and a compatible signed-in Codex CLI. Configure
+`USAGE_IMAGE`, `USAGE_AUTH_DIR`, `USAGE_UID`, `USAGE_GID`, `USAGE_READER_GID` and
+`USAGE_OUTPUT_DIR` for your installation; its legacy defaults describe the tested
+deployment and should not be assumed to exist on another NAS.
 
-Only the reader container mounts the login. The web renderer's existing data
-mount contains the allowlisted summary, never authentication files. The reader
-runs as UID/GID 568 with supplementary group 10001. Its output directory is owned
-by 568:10001, mode 2750, and snapshot files are 0640. The renderer runs as UID 10001.
-The host cron task uses root to invoke Docker; Codex itself does not run as root.
+Only the reader mounts the Codex login directory. The web renderer receives the
+filtered snapshot at `/data/codex/usage.json`, selected by `CODEX_USAGE_PATH`.
+Create the output directory with suitable owner/group and setgid permissions;
+for example, reader UID 568 with reader group 10001, directory mode 2750 and
+snapshot mode 0640 allows renderer UID 10001 to read it.
 
 The runner has an overlap lock and a 90-second limit. Its own container is cleaned
-up on exit; it never terminates another Codex process. Root filesystem is read-only,
-capabilities are dropped, no ports are published, and research data is not mounted.
-Codex has writable access to its existing login directory to handle token refresh.
-If the read or publication fails, the last working snapshot is retained.
+up on exit. Root filesystem is read-only, capabilities are dropped and no ports
+are published. Codex has writable access to its existing login directory for
+its own authentication refresh; no account credentials enter the renderer.
+Failed collection retains the last working snapshot.
 
-To refresh immediately on this NAS:
-
-```sh
-sudo sh /mnt/Main/kindle-dashboard/scripts/refresh-codex-usage-nas.sh
-```
-
-The updated reading appears on the Kindle's next automatic or manual Refresh.
-No Kindle reinstall is needed. Restarting or sleeping the PC has no effect.
+Schedule the runner every 30 minutes in TrueNAS Cron Jobs or ordinary cron.
+The host job needs Docker access, while the reader process runs as the configured
+non-root user. The Kindle picks up the result on its next refresh.
 
 ## Other Linux installations
 
@@ -93,10 +84,9 @@ from Codex are not logged. The source file is limited to 16 KiB and validated ag
 by the server. Its health is visible in the editor's source badges and `/status`.
 
 If the card becomes stale, run the runner and check the NAS Codex login/version
-through the existing TGP login workflow. The dashboard does not initiate login or
-replace the other workstream's credentials. Re-authentication, if necessary, stays
-with that existing workflow.
+using your existing Codex login workflow. The dashboard does not initiate login
+or replace credentials. Re-authentication stays with your existing setup.
 
 To stop collection, disable **Kindle Dashboard Codex usage** in TrueNAS's Cron Jobs
 settings. Removing the widget alone does not disable collection. Disabling the job
-does not sign Codex out or affect TGP. The last reading will become stale normally.
+does not sign Codex out or affect other applications. The last reading will become stale normally.

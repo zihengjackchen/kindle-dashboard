@@ -34,7 +34,7 @@ docker compose up -d --build
 
 Visit `http://NAS_IP:8080/` for the preview and connection check. Enter the dashboard
 token from `.env`; it is used only in request headers and kept in tab memory.
-This UI has no polling, configuration-writing, power-control or trading endpoints.
+The editor saves layout preferences but does not poll, control Kindle power, or place trades.
 `/health` is public; `/dashboard.png` and `/status` require the configured token.
 Use a trusted LAN or appropriately configured HTTPS; plain HTTP does not encrypt tokens.
 

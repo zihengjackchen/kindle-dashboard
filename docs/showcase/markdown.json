@@ -1,0 +1,93 @@
+{
+  "version": 1,
+  "title": "Dashboard",
+  "density": "compact",
+  "weather_units": "both",
+  "market_columns": 2,
+  "widgets": [
+    {
+      "id": "markdown",
+      "key": null,
+      "title": "A slower Sunday",
+      "row": null,
+      "column": 1,
+      "width": "full",
+      "size": "large",
+      "fields": null,
+      "content": "# Make room for the good stuff\nA small plan for a **quiet weekend**.\n\n## Morning\n- Coffee, then a walk by the water\n- Read one chapter\n- Call someone you miss\n\n## One useful thing\nBack up the photos. Put the phone away.\n\n> Leave a little room for nothing.\n\n`Next refresh: whenever you need it.`",
+      "overflow": "shrink",
+      "tickers": null,
+      "market_columns": null,
+      "weather_units": null,
+      "notes": null,
+      "backup_index": 0
+    },
+    {
+      "id": "weather",
+      "key": null,
+      "title": "",
+      "row": null,
+      "column": 1,
+      "width": "half",
+      "size": "small",
+      "fields": [
+        "temperature",
+        "condition"
+      ],
+      "content": "",
+      "overflow": "shrink",
+      "tickers": null,
+      "market_columns": null,
+      "weather_units": null,
+      "notes": null,
+      "backup_index": 0
+    },
+    {
+      "id": "notes",
+      "key": null,
+      "title": "Bring along",
+      "row": null,
+      "column": 1,
+      "width": "half",
+      "size": "small",
+      "fields": null,
+      "content": "",
+      "overflow": "shrink",
+      "tickers": null,
+      "market_columns": null,
+      "weather_units": null,
+      "notes": [
+        "Book + notebook",
+        "Water + a warm layer"
+      ],
+      "backup_index": 0
+    }
+  ],
+  "tickers": [
+    "S&P 500",
+    "VOO",
+    "VGT",
+    "META",
+    "AMZN",
+    "GOOG",
+    "AMD",
+    "PYPL",
+    "SOFI",
+    "GRAB",
+    "BTC-USD",
+    "ETH-USD"
+  ],
+  "notes_title": "Agenda & notes",
+  "notes": [],
+  "pages": {},
+  "page_order": [
+    "overview",
+    "weather",
+    "markets-1",
+    "markets-2",
+    "nas"
+  ],
+  "refresh_minutes": 60,
+  "night_minutes": 240,
+  "rotation_minutes": 0
+}

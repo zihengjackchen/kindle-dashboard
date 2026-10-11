@@ -159,6 +159,15 @@ def main():
                 assert len(markdowns)==2 and markdowns[0]['key']!=markdowns[1]['key']
                 assert markdowns[0]['column']==1 and markdowns[1]['column']==2
                 assert markdowns[0]['content']!=markdowns[1]['content']
+                page.locator('#add-widget').select_option('codex')
+                page.locator('#add').click()
+                usage=page.locator('.widget[data-id=codex]')
+                usage.locator('summary').first.click()
+                usage.locator('input[data-field=lifetime_tokens]').check()
+                page.locator('#save').click()
+                page.wait_for_function("document.querySelector('#draft-state').textContent==='Saved layout preview'")
+                saved=json.loads((Path(temp)/'layout.json').read_text())
+                assert any(w['id']=='codex' and 'lifetime_tokens' in w['fields'] for w in saved['pages']['nas']['widgets'])
                 page.set_viewport_size({'width':390,'height':844})
                 assert page.evaluate('document.documentElement.scrollWidth<=innerWidth')
                 assert not errors, errors

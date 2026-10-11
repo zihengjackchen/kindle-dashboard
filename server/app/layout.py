@@ -21,18 +21,22 @@ FIELDS = {
     "device": ["battery", "charging", "rssi", "frontlight", "uptime_seconds", "storage_free_mib", "firmware", "device", "resolution", "fetch_seconds", "fetch_failures", "last_success", "external_power", "sleep_inhibited", "power_policy"],
     "notes": ["notes"],
     "markdown": ["content"],
+    "codex": ["primary_remaining", "primary_used", "primary_reset", "secondary_remaining", "secondary_used", "secondary_reset",
+              "latest_day_tokens", "lifetime_tokens", "peak_daily_tokens", "current_streak_days", "longest_streak_days",
+              "longest_running_turn_seconds", "as_of"],
 }
 DEFAULT_FIELDS = {
     "weather": ["location", "temperature", "condition", "high_low", "precipitation", "forecast"],
     "nas": ["pool_health", "used_percent", "cpu_percent", "memory_available_gib", "alerts"],
     "markets": ["price", "change", "percent"], "backup": ["state", "last_success", "schedule"],
     "device": ["battery", "charging", "rssi"], "notes": ["notes"], "markdown": ["content"],
+    "codex": ["primary_remaining", "primary_reset", "latest_day_tokens"],
 }
 
 
 class Widget(BaseModel):
     model_config = ConfigDict(extra="forbid")
-    id: Literal["weather", "nas", "markets", "notes", "device", "backup", "markdown"]
+    id: Literal["weather", "nas", "markets", "notes", "device", "backup", "markdown", "codex"]
     key: str | None = Field(default=None, max_length=48, pattern=r"^[A-Za-z0-9_-]+$")
     title: str = Field(default="", max_length=40)
     row: int | None = Field(default=None, ge=1, le=12)

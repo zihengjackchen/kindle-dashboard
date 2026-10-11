@@ -13,6 +13,7 @@ class Settings:
     snapshot_path: str = ""
     state_path: str = ""
     layout_path: str = ""
+    codex_usage_path: str = ""
 
     @classmethod
     def from_env(cls) -> "Settings":
@@ -23,6 +24,7 @@ class Settings:
             snapshot_path=os.getenv("DASHBOARD_SNAPSHOT_PATH", ""),
             state_path=os.getenv("DASHBOARD_STATE_PATH", ""),
             layout_path=os.getenv("DASHBOARD_LAYOUT_PATH", ""),
+            codex_usage_path=os.getenv("CODEX_USAGE_PATH", ""),
         )
         ZoneInfo(settings.timezone)  # Fail at startup for a misspelled timezone.
         return settings

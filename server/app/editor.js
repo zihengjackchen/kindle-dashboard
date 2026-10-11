@@ -1,5 +1,5 @@
 'use strict';
-const $=id=>document.getElementById(id), names={weather:'Weather',nas:'Home server',markets:'Watchlist',backup:'Backblaze backup',device:'Kindle',notes:'Agenda & notes',markdown:'Markdown'};
+const $=id=>document.getElementById(id), names={weather:'Weather',nas:'Home server',markets:'Watchlist',backup:'Backblaze backup',device:'Kindle',notes:'Agenda & notes',markdown:'Markdown',codex:'Codex / ChatGPT usage'};
 let draft,defaults,saved,pageDefaults={},fields={},defaultFields={},symbols=[],devices={},nasInfo=null,imageUrl,connected=false,dirty=false,busy=false,canSave=false,editing='overview',dragged=null,previewTimer;
 const clone=value=>JSON.parse(JSON.stringify(value));
 function message(text,error=false){$('message').textContent=text;$('message').dataset.error=String(error)}
@@ -52,7 +52,7 @@ $('import-file').onchange=()=>action(async()=>{const file=$('import-file').files
 window.addEventListener('beforeunload',event=>{if(dirty){event.preventDefault();event.returnValue=''}});
 
 const pageNames={overview:'Overview',weather:'Weather','markets-1':'Markets 1','markets-2':'Markets 2',nas:'Home server'};
-function fieldLabel(key){return ({rssi:'Wi-Fi signal',cpu_percent:'CPU usage',memory_available_gib:'Available RAM',memory_total_gib:'Total RAM',used_percent:'Storage used',pool_free_gib:'Free storage',pool_size_gib:'Total storage',cpu_temperature_c:'CPU temperature',network_rx_mbps:'Network download',network_tx_mbps:'Network upload',disk_read_mbps:'Disk read',disk_write_mbps:'Disk write',uptime_seconds:'Uptime',storage_free_mib:'Free Kindle storage',fetch_seconds:'Download duration',fetch_failures:'Download failures',frontlight:'Frontlight level',high_low:'High / low',last_success:'Last successful update',external_power:'External power',sleep_inhibited:'Idle sleep held',power_policy:'Power policy'})[key]||key.replaceAll('_',' ').replace(/^./,c=>c.toUpperCase())}
+function fieldLabel(key){return ({primary_remaining:'Primary window remaining',primary_used:'Primary window used',primary_reset:'Primary window resets',secondary_remaining:'Secondary window remaining',secondary_used:'Secondary window used',secondary_reset:'Secondary window resets',latest_day_tokens:'Latest reported day tokens',lifetime_tokens:'Lifetime account tokens',peak_daily_tokens:'Peak daily account tokens',current_streak_days:'Current streak (days)',longest_streak_days:'Longest streak (days)',longest_running_turn_seconds:'Longest turn (seconds)',as_of:'Usage sync time',rssi:'Wi-Fi signal',cpu_percent:'CPU usage',memory_available_gib:'Available RAM',memory_total_gib:'Total RAM',used_percent:'Storage used',pool_free_gib:'Free storage',pool_size_gib:'Total storage',cpu_temperature_c:'CPU temperature',network_rx_mbps:'Network download',network_tx_mbps:'Network upload',disk_read_mbps:'Disk read',disk_write_mbps:'Disk write',uptime_seconds:'Uptime',storage_free_mib:'Free Kindle storage',fetch_seconds:'Download duration',fetch_failures:'Download failures',frontlight:'Frontlight level',high_low:'High / low',last_success:'Last successful update',external_power:'External power',sleep_inhibited:'Idle sleep held',power_policy:'Power policy'})[key]||key.replaceAll('_',' ').replace(/^./,c=>c.toUpperCase())}
 function renderPages(){
  const root=$('page-order');root.replaceChildren();
  const order=[...draft.page_order,...Object.keys(pageNames).filter(id=>!draft.page_order.includes(id))];
@@ -73,8 +73,8 @@ function renderPages(){
 }
 function sourceBadges(status){
  const root=$('sources');root.replaceChildren();
- for(const [key,label] of [['weather','Weather'],['nas','Home server']]){const record=status.sources[key],node=document.createElement('span');node.className='source';node.dataset.state=record?.status||'UNKNOWN';node.textContent=label+': '+(record?.status==='CURRENT'?'current':record?.status==='STALE'?'older data':'unavailable');root.append(node)}
- const quotes=Object.entries(status.sources).filter(([k])=>!['weather','nas'].includes(k));
+ for(const [key,label] of [['weather','Weather'],['nas','Home server'],['codex','Codex / ChatGPT']]){const record=status.sources[key],node=document.createElement('span');node.className='source';node.dataset.state=record?.status||'UNKNOWN';node.textContent=label+': '+(record?.status==='CURRENT'?'current':record?.status==='STALE'?'older data':'unavailable');root.append(node)}
+ const quotes=Object.entries(status.sources).filter(([k])=>!['weather','nas','codex'].includes(k));
  if(quotes.length){const node=document.createElement('span'),count=quotes.filter(([,r])=>r?.status==='CURRENT').length;node.className='source';node.textContent='Markets: '+count+'/'+quotes.length+' current';node.dataset.state=count===quotes.length?'CURRENT':'STALE';root.append(node)}
 }
 $('page-reset').onclick=()=>{
@@ -99,6 +99,7 @@ function widgetOptions(row,w,index){
   detail.append(widgetSelect('Long content',[['shrink','Shrink, then truncate'],['truncate','Keep text size, truncate']],w.overflow||'shrink',v=>w.overflow=v));
   const hint=document.createElement('p');hint.className='hint';hint.textContent='Headings, bold, lists, quotes, code and link labels. 4,000 characters. Images and HTML are not rendered. Preview shows the final fit.';detail.append(hint);detail.open=true;
  }
+ if(w.id==='codex'){const hint=document.createElement('p');hint.className='hint';hint.textContent='Read by Codex on the NAS. Window lengths come from your account; unavailable windows stay unknown. Token totals are account activity, not a count of messages or an API bill. A source timestamp is always shown.';detail.append(hint)}
  if(w.id==='markets'){
   input('Symbols, comma-separated (blank inherits page)',(w.tickers||[]).join(', '),v=>w.tickers=v.trim()?v.split(',').map(t=>t.trim().toUpperCase()).filter(Boolean):null,false,400);
   detail.append(widgetSelect('Watchlist columns',[['','Page setting'],['2','Two'],['3','Three']],w.market_columns??'',v=>w.market_columns=v?Number(v):null));

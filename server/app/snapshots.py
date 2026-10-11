@@ -1,6 +1,6 @@
 """Bounded persisted source snapshots. Rendering never performs network work."""
 import logging
-from datetime import datetime
+from datetime import date, datetime
 from pathlib import Path
 from typing import Literal
 from pydantic import AwareDatetime, BaseModel, ConfigDict, Field, model_validator
@@ -84,6 +84,33 @@ class NAS(Record):
     backups: list[Backup] = Field(default_factory=list, max_length=8)
 
 
+class UsageWindow(BaseModel):
+    model_config = ConfigDict(extra="forbid", allow_inf_nan=False)
+    used_percent: float = Field(ge=0, le=100)
+    window_minutes: int | None = Field(default=None, ge=1, le=525600)
+    resets_at: AwareDatetime | None = None
+
+
+class CodexUsage(Record):
+    source: Literal["Codex account"] = "Codex account"
+    limit_name: Literal["Codex", "Account"] = "Codex"
+    primary: UsageWindow | None = None
+    secondary: UsageWindow | None = None
+    lifetime_tokens: int | None = Field(default=None, ge=0, le=9007199254740991)
+    peak_daily_tokens: int | None = Field(default=None, ge=0, le=9007199254740991)
+    latest_day: date | None = None
+    latest_day_tokens: int | None = Field(default=None, ge=0, le=9007199254740991)
+    current_streak_days: int | None = Field(default=None, ge=0, le=100000)
+    longest_streak_days: int | None = Field(default=None, ge=0, le=100000)
+    longest_running_turn_seconds: int | None = Field(default=None, ge=0, le=31536000)
+
+    def status(self, now):
+        status = super().status(now)
+        if status == "CURRENT" and any(w and w.resets_at and w.resets_at <= now for w in (self.primary, self.secondary)):
+            return "STALE"
+        return status
+
+
 class Snapshot(BaseModel):
     model_config = ConfigDict(extra="forbid")
     schema_version: Literal[1] = 1
@@ -91,6 +118,7 @@ class Snapshot(BaseModel):
     weather: Weather | None = None
     quotes: list[Quote] = Field(default_factory=list, max_length=32)
     nas: NAS | None = None
+    codex: CodexUsage | None = None
     @model_validator(mode="before")
     @classmethod
     def discard_legacy_usage(cls, value):
@@ -110,7 +138,24 @@ class Snapshot(BaseModel):
         return self
 
 
-def load_snapshot(path: str) -> Snapshot:
+def load_snapshot(path: str, usage_path: str = "") -> Snapshot:
+    snapshot = _load_snapshot(path)
+    if usage_path:
+        try:
+            with Path(usage_path).open("rb") as stream:
+                raw = stream.read(16385)
+            if len(raw) > 16384:
+                raise ValueError("Usage snapshot exceeds 16 KiB")
+            snapshot.codex = CodexUsage.model_validate_json(raw)
+        except FileNotFoundError:
+            snapshot.codex = None
+        except (OSError, ValueError):
+            logging.getLogger("dashboard").warning("Usage snapshot invalid; usage unavailable")
+            snapshot.codex = None
+    return snapshot
+
+
+def _load_snapshot(path: str) -> Snapshot:
     if not path:
         return Snapshot()
     try:

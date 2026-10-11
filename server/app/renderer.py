@@ -65,7 +65,7 @@ def stamp(record, now, tz):
 def render_dashboard(data: DashboardRequest, settings: Settings, now: datetime | None = None, snapshot: Snapshot | None = None, layout=None) -> bytes:
     tz = ZoneInfo(settings.timezone)
     now = (now or datetime.now(tz)).astimezone(tz)
-    snapshot = snapshot if snapshot is not None else load_snapshot(settings.snapshot_path)
+    snapshot = snapshot if snapshot is not None else load_snapshot(settings.snapshot_path, settings.codex_usage_path)
     from .layout import Layout
     from .widgets import render_overview
     return render_overview(data, settings, snapshot, now, (layout or Layout()).for_page(data.page))

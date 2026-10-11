@@ -29,7 +29,9 @@ Connection & source details show timestamps, NAS metrics and last Kindle contact
 A newly rendered image may contain older quotes: the footer reports older source
 data. Source names and repetitive timestamps are omitted from the image itself.
 
-ChatGPT usage has been removed. The service runs independently on the NAS.
+The optional [Codex / ChatGPT usage widget](codex-usage.md) reads a filtered snapshot
+from the NAS's authenticated Codex reader. Choose allowance, reset or token fields
+per widget. The source timestamp is always shown; no PC connection is required.
 
 The preview starts at the native app canvas, 1056 × 1162 on the tested Paperwhite,
 and uses the latest reported dimensions when a device is available. This excludes

@@ -65,6 +65,10 @@ sleep/wake cycle; it is not yet a periodic sleep/refresh mode.
 
 ## Architecture
 
+The optional [Codex / ChatGPT usage widget](docs/codex-usage.md) reads account
+allowance and token activity through the NAS's existing Codex login. A 30-minute
+NAS job publishes only filtered metrics; the PC is not involved.
+
 ```text
 Dashboard library scriptlet / KUAL
   -> Mesquite app: cached images + top Previous / Refresh / Next + native X

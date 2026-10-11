@@ -57,7 +57,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         # Read one snapshot/layout/time so every page represents the same refresh.
         value = layouts.get()
         now = datetime.now(timezone.utc)
-        snapshot = load_snapshot(settings.snapshot_path)
+        snapshot = load_snapshot(settings.snapshot_path, settings.codex_usage_path)
         try:
             images = {page: base64.b64encode(render_dashboard(
                 data.model_copy(update={"page": page}), settings, now, snapshot, value
@@ -132,11 +132,12 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     def status(response: Response):
         response.headers["Cache-Control"] = "no-store"
         now = datetime.now(timezone.utc)
-        snapshot = load_snapshot(settings.snapshot_path)
-        records = {"weather": snapshot.weather, "nas": snapshot.nas}
+        snapshot = load_snapshot(settings.snapshot_path, settings.codex_usage_path)
+        records = {"weather": snapshot.weather, "nas": snapshot.nas, "codex": snapshot.codex}
         records.update({quote.symbol: quote for quote in snapshot.quotes})
         return {"service": "ok", "server_time": now.isoformat(), "devices": contacts.snapshot(),
                 "nas": snapshot.nas,
+                "codex": snapshot.codex,
                 "sources": {key: {"status": value.status(now), "as_of": value.as_of.isoformat(),
                                   "valid_until": value.valid_until.isoformat()} if value else None
                             for key, value in records.items()}}

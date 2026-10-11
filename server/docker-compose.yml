@@ -10,6 +10,7 @@ services:
       DASHBOARD_SNAPSHOT_PATH: /data/snapshot.json
       DASHBOARD_STATE_PATH: /state/contacts.json
       DASHBOARD_LAYOUT_PATH: /state/layout.json
+      CODEX_USAGE_PATH: /data/codex/usage.json
     volumes:
       - ./data:/data:ro
       - contact-state:/state

@@ -305,3 +305,26 @@ without a server update.
   physical availability to recover SSH. KOSSH can terminate on power-button sleep.
 - Rollback files: .tools/kindle-before-alarm-20261011/. Read-only evidence:
   .tools/native-alarm-readonly.txt. See native-sleep.md for the experiment/recovery.
+
+## NAS Codex usage widget, 2026-10-11
+
+- Located the existing NAS login used by the TGP workstream. Reused its Codex
+  0.162.1 image under a separate dashboard tag and its existing UID 568 login mount.
+  No PC dependency, login replacement, research run or inference request.
+- The filtered reader succeeded on the NAS. Added TrueNAS cron job 2, every 30
+  minutes, then ran it through cronjob.run. The snapshot timestamp advanced and
+  the web service reported CURRENT. No reader container remained after completion.
+- Installed the independent source-file mount setting and rebuilt only the
+  dashboard service. The market/weather collector and TGP configuration were left
+  running as configured. Credentials are not mounted into the renderer.
+- Added one full-width small usage widget to the saved overview. Verified all
+  previous widgets, page settings, symbols and intervals were otherwise identical.
+- Inspected the real grayscale NAS preview at 1056 x 1162. The regular all-page
+  bundle successfully rendered all five pages. No Kindle-side code changes needed;
+  the new card arrives on the next refresh. No physical Kindle redraw was claimed.
+- 120 server tests passed; editor browser tests passed with adding/selecting/saving
+  usage fields. ShellCheck passed for the NAS runner. Coverage includes privacy
+  filtering, actual window duration, absent values, stale/reset handling, atomic
+  retention, malformed snapshots, authentication, rendering and the bundle path.
+- Source rollback: /mnt/Main/kindle-dashboard/usage-before-20261011.tar.gz.
+  Prior layout: .tools/layout-before-codex.json (private, not committed).

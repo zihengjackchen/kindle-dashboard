@@ -235,6 +235,51 @@ def draw_device(card,data,now,fields):
     lines(card,"KINDLE",[(labels.get(key,key.replace("_"," ").capitalize()),values[key]) for key in fields])
 
 
+def usage_values(usage, now):
+    def count(value):
+        return f"{value:,}" if value is not None else "Unknown"
+    values = {}
+    for name in ("primary", "secondary"):
+        window = getattr(usage, name)
+        minutes = window.window_minutes if window else None
+        period = (f"{minutes//1440}d" if minutes and minutes % 1440 == 0 else
+                  f"{minutes//60}h" if minutes and minutes % 60 == 0 else
+                  f"{minutes}m" if minutes else name.capitalize())
+        expired = bool(window and window.resets_at and window.resets_at <= now)
+        for kind in ("used", "remaining"):
+            value = "Awaiting sync" if expired else (
+                f"{window.used_percent if kind == 'used' else 100-window.used_percent:g}%" if window else "Unknown")
+            values[f"{name}_{kind}"] = (f"{period} {kind}", value)
+        values[f"{name}_reset"] = (f"{period} reset", window.resets_at.astimezone(now.tzinfo).strftime("%m/%d %H:%M")
+                                   if window and window.resets_at else "Unknown")
+    values.update(
+        latest_day_tokens=(f"Tokens {usage.latest_day:%m/%d}" if usage.latest_day else "Latest day tokens", count(usage.latest_day_tokens)),
+        lifetime_tokens=("Lifetime tokens", count(usage.lifetime_tokens)),
+        peak_daily_tokens=("Peak day tokens", count(usage.peak_daily_tokens)),
+        current_streak_days=("Current streak", show(usage.current_streak_days, " days")),
+        longest_streak_days=("Longest streak", show(usage.longest_streak_days, " days")),
+        longest_running_turn_seconds=("Longest turn", show(usage.longest_running_turn_seconds, " s")),
+        as_of=("Synced", usage.as_of.astimezone(now.tzinfo).strftime("%m/%d %H:%M")),
+    )
+    return values
+
+
+def draw_codex(card, snap, now, fields):
+    usage = snap.codex
+    if usage is None:
+        lines(card, "CODEX / CHATGPT", [("Usage", "Not connected")])
+        return
+    values = usage_values(usage, now)
+    # Reserve a small footer for source time; the page's render time is different.
+    original_height = card.h
+    card.h *= .88
+    lines(card, "CODEX / CHATGPT", [values[key] for key in fields])
+    card.h = original_height
+    status = usage.status(now)
+    label = "Synced" if status == "CURRENT" else "Stale" if status == "STALE" else "Check clock"
+    card.text(f"{label} {usage.as_of.astimezone(now.tzinfo):%m/%d %H:%M}", 0, .91, 18, shade=65, width=1)
+
+
 def render_overview(data, settings, snapshot, now, layout):
     c=Canvas(data.width,data.height,settings)
     rows=widget_slots(layout.widgets)
@@ -266,6 +311,8 @@ def render_overview(data, settings, snapshot, now, layout):
             elif widget.id=="markdown":
                 from .markdown_widget import draw_markdown
                 draw_markdown(card,widget.content if "content" in fields else "",widget.overflow)
+            elif widget.id=="codex":
+                draw_codex(card,snapshot,now,fields); records.append(snapshot.codex)
             else: draw_device(card,data,now,fields)
             card.finish()
         y+=h+gap

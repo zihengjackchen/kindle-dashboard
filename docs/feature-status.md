@@ -22,7 +22,7 @@
 | Automatic suspend and scheduled hardware wake | Production refresh loop not enabled. Guarded [one-cycle native alarm test](native-sleep.md) implemented; physical alarm wake still unverified |
 | Portfolio integration with Robinhood/Fidelity | Future; no account connection or provider contract configured |
 | Stock analysis / buying signals | Future; no strategy or analysis provider specified |
-| ChatGPT usage | Removed as requested |
+| Codex / ChatGPT usage | Reintroduced at user request using the NAS Codex login; selectable fields, source timestamp, 30-minute TrueNAS job and stale handling |
 | GitHub publication | No remote configured in this repository; local commits and source bundle available |
 
 The editor does not change device power settings or expose NAS privileged controls.

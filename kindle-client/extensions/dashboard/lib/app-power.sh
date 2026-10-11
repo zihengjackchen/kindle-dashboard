@@ -52,13 +52,7 @@ app_light_restore() {
 app_power_update() {
     if [ "$KEEP_AWAKE_PLUGGED" != 1 ] || ! app_foreground; then app_power_release; return; fi
     # Charging may be false when full: read external supply, not battery charging.
-    external=$(probe lipc-get-prop com.lab126.powerd isUsbConnected)
-    if [ "$external" != 0 ] && [ "$external" != 1 ]; then
-        case "$VERIFIED_EXTERNAL_POWER_PATH" in
-            /sys/class/power_supply/*/present|/sys/class/power_supply/*/online)
-                external=$(read_first "$VERIFIED_EXTERNAL_POWER_PATH") ;;
-        esac
-    fi
+    external=$(external_power)
     [ "$external" = 1 ] || { app_power_release; return; }
     inhibit=$(probe lipc-get-prop com.lab126.powerd preventScreenSaver)
     case "$inhibit" in 0|1) ;; *) log 'Keep-awake property unavailable; using native sleep'; return ;; esac
@@ -67,7 +61,13 @@ app_power_update() {
     [ "$inhibit" = 0 ] || return 0
     if [ ! -f "$STATE_DIR/prior-inhibit" ]; then
         printf '%s\n' "$inhibit" > "$STATE_DIR/prior-inhibit"
-        probe lipc-set-prop com.lab126.powerd preventScreenSaver 1 || app_power_release
+    fi
+    # Another app can release the shared native property during our session.
+    # Reassert our requested hold on a native event even if we already own it.
+    if probe lipc-set-prop com.lab126.powerd preventScreenSaver 1; then
         log 'Plugged-in app session requested stay-awake; native power button remains available'
+    else
+        app_power_release
+        log 'ERROR could not request plugged-in stay-awake'
     fi
 }

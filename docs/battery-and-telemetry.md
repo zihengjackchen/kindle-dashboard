@@ -110,3 +110,23 @@ inhibitor exists, with event-driven release and a configurable external-power
 indicator; hardware acceptance remains required as noted above. Jstriblet's main battery advantage is suspend-to-RAM plus RTC wake; its
 screen takeover also stops the native GUI. Those are materially different from
 our interactive app and cannot be enabled here by copying a sleep command.
+
+### Investigation on 2026-10-10
+
+SSH reconnected successfully. The installed keep-awake flag was still disabled.
+The device reported discharging, `battStateInfo.usb=false`, and charger/uic
+`present=0`. Charger `online=1` was still misleading and is not used. This firmware
+does not expose `isUsbConnected`; the client now falls back to the named USB
+boolean in `battStateInfo`. Firmware identification also reads `/etc/version.txt`.
+The observed build was `juno_16020101_muscat_wario` (user-reported 5.16.2.1.1).
+
+Power telemetry now includes external power, the shared native sleep hold, and
+the configured policy. Unknown external power allows native sleep. An existing
+hold owned by an SSH tool is not claimed by Dashboard. The supervisor can now
+reassert its own hold if it is cleared, and records native sleep/wake and foreground
+changes to make subsequent unexpected exits diagnosable.
+
+RTC interfaces exist, but no alarm or raw suspend test was executed. Their
+presence alone does not establish wake reliability or ad-lockscreen behavior.
+The foreground refresh timer remains separate from scheduled hardware wake.
+No battery-runtime estimate is claimed while SSH itself holds the device awake.

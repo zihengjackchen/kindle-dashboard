@@ -34,3 +34,21 @@ lockscreen command is used here.
 The dashboard implementation is original; no Wordle source/assets or KOReader
 runtime is bundled. References establish API patterns, not proof of compatibility
 with an untested device.
+
+### Power approaches revisited, 2026-10-10
+
+- [jstriblet/kindle-wall-display](https://github.com/jstriblet/kindle-wall-display):
+  alarm readback, opt-in suspend testing, cached images and bounded recovery are
+  useful principles. Its calendar.sh also stops the native GUI/webreader and changes
+  the CPU governor during takeover. That is incompatible with simply dropping it
+  into the active Mesquite app and does not prove Special Offers compatibility.
+- [1RandomDev/kindle-smarthome-dashboard](https://github.com/1RandomDev/kindle-smarthome-dashboard):
+  native WAF interaction and server offloading are relevant; its persistent
+  WebSocket and standby prevention are explicitly described as battery hungry.
+  We retain cached PNG navigation and short requests.
+- [alexishida/kindle-dashboard](https://github.com/alexishida/kindle-dashboard):
+  server-rendered images, atomic publication and diagnostics are useful patterns.
+  Its Electron/local AI usage dependencies do not fit this standalone NAS service.
+
+No upstream code was copied in this update. No boot integration, GUI shutdown,
+lockscreen replacement, hardware alteration or raw suspend was introduced.

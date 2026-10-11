@@ -2,6 +2,8 @@
 from datetime import datetime
 from io import BytesIO
 from math import ceil
+from copy import copy
+from PIL import Image, ImageDraw
 
 from .renderer import Canvas, font
 
@@ -17,17 +19,46 @@ def widget_rows(widgets):
     return rows
 
 
+def widget_slots(widgets):
+    """Two-column grid; explicit cells are reserved before auto-placement."""
+    if all(widget.row is None for widget in widgets):
+        return [[(w, i, 1 if len(row) == 2 else 2) for i, w in enumerate(row)]
+                for row in widget_rows(widgets)]
+    cells, placements = set(), []
+    for widget in sorted(widgets, key=lambda w: w.row is None):
+        span = 2 if widget.width == "full" else 1
+        if widget.row is not None:
+            row, col = widget.row-1, widget.column-1
+        else:
+            row, col = next((r, c) for r in range(24) for c in range(3-span)
+                            if all((r, c+i) not in cells for i in range(span)))
+        cells.update((row, col+i) for i in range(span))
+        placements.append((row, widget, col, span))
+    return [[(w, col, span) for r, w, col, span in placements if r == row]
+            for row in range(max(r for r, *_ in placements)+1)]
+
+
 class Card:
     def __init__(self, canvas, bounds, size, density):
-        self.c = canvas
-        self.x, self.y, self.w, self.h = bounds
+        self.destination = canvas
+        self.origin = (round(bounds[0]), round(bounds[1]))
+        self.x, self.y, self.w, self.h = 0, 0, bounds[2], bounds[3]
+        self.c = copy(canvas)
+        self.c.image = Image.new("L", (ceil(self.w), ceil(self.h)), 255)
+        self.c.draw = ImageDraw.Draw(self.c.image)
         self.pad = min(22 * canvas.scale, self.w * .045)
         self.scale = min(canvas.width / 1236, canvas.height / 1400, self.w / 480, self.h / 190)
         self.type_scale = 1 if density == "compact" else 1.12
-        canvas.draw.rounded_rectangle((self.x, self.y, self.x+self.w, self.y+self.h),
+        self.title = ""
+        self.c.draw.rounded_rectangle((0, 0, self.w-1, self.h-1),
                                       radius=max(3, int(22 * canvas.scale)), fill=250, outline=0, width=1)
 
+    def finish(self):
+        self.destination.image.paste(self.c.image, self.origin)
+
     def text(self, value, x, y, size=28, bold=False, shade=0, right=False, width=.92):
+        if x == 0 and y == 0 and self.title:
+            value = self.title
         value = str(value)
         pixels = max(6, round(size * self.scale * self.type_scale))
         face = font(pixels, self.c.settings.font_path, bold)
@@ -169,11 +200,11 @@ def draw_nas(card, snap, now, fields):
     lines(card,"HOME SERVER",values)
 
 
-def draw_backup(card,snap,now,fields):
+def draw_backup(card,snap,now,fields,index=0):
     backups=snap.nas.backups if snap.nas else []
-    if not backups:
+    if index >= len(backups):
         lines(card,"BACKBLAZE",[("Backup", "Not connected")]); return
-    b=backups[0]
+    b=backups[index]
     def stamp(value):
         return value.astimezone(now.tzinfo).strftime("%b %d %H:%M") if value else "Unknown"
     values={"name":b.name,"state":b.state,"last_success":stamp(b.last_success),"last_run":stamp(b.last_run),
@@ -192,39 +223,51 @@ def draw_device(card,data,now,fields):
     values={"battery":show(data.battery,"%"),"charging":"Charging" if data.charging else "On battery" if data.charging is not None else "Unknown",
             "rssi":show(data.rssi," dBm"),"resolution":f"{data.width} × {data.height}",
             "last_success":datetime.fromtimestamp(data.last_success_epoch,now.tzinfo).strftime("%m/%d %H:%M") if data.last_success_epoch else "—"}
+    for key in ("external_power", "sleep_inhibited"):
+        value=getattr(data,key,None)
+        values[key]="Yes" if value is True else "No" if value is False else "Unknown"
+    values["power_policy"]={"native-sleep":"Native sleep", "plugged-in":"Stay on when plugged"}.get(data.power_policy,"Unknown")
     for key in fields:
         if key not in values: values[key]=show(getattr(data,key,None))
     labels={"rssi":"Wi-Fi signal", "charging":"Power", "frontlight":"Frontlight", "uptime_seconds":"Uptime (s)",
-            "storage_free_mib":"Free space (MiB)", "fetch_seconds":"Download (s)", "fetch_failures":"Fetch failures"}
+            "storage_free_mib":"Free space (MiB)", "fetch_seconds":"Download (s)", "fetch_failures":"Fetch failures",
+            "external_power":"External power", "sleep_inhibited":"Idle sleep held", "power_policy":"Power policy"}
     lines(card,"KINDLE",[(labels.get(key,key.replace("_"," ").capitalize()),values[key]) for key in fields])
 
 
 def render_overview(data, settings, snapshot, now, layout):
     c=Canvas(data.width,data.height,settings)
-    rows=widget_rows(layout.widgets)
-    weights=[max({"small":2,"medium":3,"large":7}[w.size] for w in row) for row in rows]
+    rows=widget_slots(layout.widgets)
+    weights=[max(({"small":2,"medium":3,"large":7}[w.size] for w, _, _ in row), default=2) for row in rows]
     gap=.010 if layout.density=="compact" else .018
     available=.936-gap*(len(rows)-1)
     y=.016
     records=[]
     for row,weight in zip(rows,weights):
         h=available*weight/sum(weights)
-        for col,widget in enumerate(row):
-            w=(.956-gap)/2 if len(row)==2 else .956
-            card=Card(c,((.022+col*(w+gap))*c.width,y*c.height,w*c.width,h*c.height),widget.size,layout.density)
+        for widget,col,span in row:
+            unit=(.956-gap)/2
+            w=unit if span==1 else .956
+            card=Card(c,((.022+col*(unit+gap))*c.width,y*c.height,w*c.width,h*c.height),widget.size,layout.density)
+            card.title=widget.title
             fields=selected(widget)
             if widget.id=="weather":
-                draw_weather(card,snapshot,now,layout.weather_units,fields); records.append(snapshot.weather)
+                draw_weather(card,snapshot,now,widget.weather_units or layout.weather_units,fields); records.append(snapshot.weather)
             elif widget.id=="nas":
                 draw_nas(card,snapshot,now,fields); records.append(snapshot.nas)
             elif widget.id=="backup":
-                draw_backup(card,snapshot,now,fields); records.append(snapshot.nas)
+                draw_backup(card,snapshot,now,fields,widget.backup_index); records.append(snapshot.nas)
             elif widget.id=="markets":
-                draw_markets(card,snapshot,now,layout.tickers,layout.market_columns,fields)
+                tickers=widget.tickers or layout.tickers
+                draw_markets(card,snapshot,now,tickers,widget.market_columns or layout.market_columns,fields)
                 quotes={q.symbol:q for q in snapshot.quotes}
-                records.extend(quotes.get(t) for t in layout.tickers)
-            elif widget.id=="notes": draw_notes(card,layout,fields)
+                records.extend(quotes.get(t) for t in tickers)
+            elif widget.id=="notes": draw_notes(card,layout.model_copy(update={"notes":widget.notes}) if widget.notes is not None else layout,fields)
+            elif widget.id=="markdown":
+                from .markdown_widget import draw_markdown
+                draw_markdown(card,widget.content if "content" in fields else "",widget.overflow)
             else: draw_device(card,data,now,fields)
+            card.finish()
         y+=h+gap
     warning=" · Sample data" if snapshot.demo else ""
     stale=[r for r in records if r and r.status(now)!="CURRENT"]

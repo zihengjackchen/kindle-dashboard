@@ -246,3 +246,23 @@ without a server update.
 - No Kindle client reinstall is required: layouts arrive on the next Refresh.
   This change does not enable keep-awake or establish a battery-life estimate.
 - Server source rollback archive: /mnt/Main/kindle-dashboard/editor-before-20261009.tar.gz.
+
+## Widget instances, Markdown and power detection, 2026-10-10
+
+- Full suite: 163 passed, 1 skipped. After final editor/storage refinements,
+  all 106 server tests passed again. Editor and Kindle app browser checks passed.
+- Added coverage for reserved grid cells, overlapping positions, duplicate keys,
+  per-instance content, multiple device resolutions, bounded Markdown, long words,
+  truncation, no remote image/link loading, charger JSON and reasserted owned holds.
+- Browser exercised two Markdown instances with different text, explicit placement,
+  overlap rejection, saved independent keys, and mobile width after placement.
+- ShellCheck warning-level checks passed on the five changed Kindle scripts.
+- Rebuilt and deployed NAS dashboard. Live Markdown preview decoded at 1056 x 1162;
+  inspected grayscale output with real container fonts. No live layout save occurred.
+- Updated five Kindle files by SFTP, preserving private configuration. Native document
+  launch succeeded; logs confirm fresh telemetry, all-page fetch, decode and atomic
+  commit. Framebuffer screenshot shows the new overview without rendering spill.
+- External power still reported 0; keep-awake remains disabled pending physical
+  charger verification. No RTC alarm/suspend experiment was performed.
+- NAS source rollback archive: /mnt/Main/kindle-dashboard/widgets-before-20261010.tar.gz.
+  Kindle originals are retained locally in .tools/kindle-before-widgets-20261010/.

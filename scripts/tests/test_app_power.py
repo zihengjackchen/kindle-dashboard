@@ -29,6 +29,9 @@ def test_power_and_light_are_scoped_and_restored(setup):
     [ "$(cat "$STATE_DIR/prior-light")" = 8 ] || exit 12
     app_power_update
     [ "$inhibited" = 1 ] || exit 13
+    inhibited=0
+    app_power_update
+    [ "$inhibited" = 1 ] || exit 24
     usb=0
     app_power_update
     [ "$inhibited" = 0 ] || exit 14
@@ -64,6 +67,23 @@ def test_power_and_light_are_scoped_and_restored(setup):
     app_light_restore
     [ "$light" = 8 ] || exit 17
     [ ! -f "$STATE_DIR/prior-light" ] || exit 18
+    '''
+    result=subprocess.run([SH,'-c',body],env=env,capture_output=True,text=True,timeout=15)
+    assert result.returncode==0,result.stderr
+
+
+def test_native_json_cable_state_is_not_battery_online(setup):
+    env,*_=setup
+    body='''
+    . "$DASHBOARD_DIR/lib/client.sh"
+    MOCK_MODE=0
+    info='{"battInfo":[{"charging":false}],"usb":true}'
+    probe() { [ "$3" != battStateInfo ] || printf '%s' "$info"; }
+    [ "$(external_power)" = 1 ] || exit 11
+    info='{"battInfo":[{"charging":true}],"usb":false}'
+    [ "$(external_power)" = 0 ] || exit 12
+    info='{"battInfo":[{"charging":true}]}'
+    [ -z "$(external_power)" ] || exit 13
     '''
     result=subprocess.run([SH,'-c',body],env=env,capture_output=True,text=True,timeout=15)
     assert result.returncode==0,result.stderr

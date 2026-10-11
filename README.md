@@ -18,6 +18,7 @@ NAS browser. Amazon Special Offers and its normal lockscreen remain untouched.
   [helper setup](docs/kindle-app.md#http-helper-for-legacy-arm-kindles).
 - [Kindle app installation, power behavior and recovery](docs/kindle-app.md)
 - [Dashboard editor](docs/dashboard-editor.md)
+- [Requested features and remaining work](docs/feature-status.md)
 
 ## Included
 
@@ -28,6 +29,10 @@ NAS browser. Amazon Special Offers and its normal lockscreen remain untouched.
   Backblaze Cloud Sync status, Kindle telemetry and manual notes.
 - Drag-and-drop widget order, half/full width, three height choices, per-widget
   field selection, automatic PNG preview, save/discard/reset and JSON import/export.
+- Up to twelve widget instances per page, explicit row/column placement, custom
+  titles, independent watchlists and backup-job selection.
+- Markdown cards with headings, bold, lists and code; long content shrinks or
+  truncates inside its card. Rendering remains entirely on the NAS.
 - A quiet grayscale layout: no branding header, repeated quote timestamps, source
   lists or ChatGPT usage. One timestamp and exception-only freshness warnings.
 - App refresh timer: 60 minutes normally, four hours at night or low battery;

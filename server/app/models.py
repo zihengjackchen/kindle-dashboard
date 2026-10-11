@@ -14,6 +14,9 @@ class DashboardRequest(BaseModel):
     height: int = Field(default=1648, gt=0, le=100_000)
     battery: int | None = Field(default=None, ge=0, le=100)
     charging: bool | None = None
+    external_power: bool | None = None
+    sleep_inhibited: bool | None = None
+    power_policy: Literal["native-sleep", "plugged-in"] | None = None
     device: str = Field(default="unknown", max_length=80, pattern=r"^[A-Za-z0-9._-]+$")
     device_id: str | None = Field(default=None, min_length=1, max_length=80, pattern=r"^[A-Za-z0-9._-]+$")
     rssi: int | None = Field(default=None, ge=-127, le=-1)

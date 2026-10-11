@@ -116,7 +116,7 @@ def main():
                 page.locator("#page").select_option("nas")
                 page.wait_for_function("document.querySelector('#title').value==='Home server'")
                 page.wait_for_function("!document.querySelector('#save').disabled")
-                page.locator(".widget[data-id=nas] summary").click()
+                page.locator(".widget[data-id=nas] summary").first.click()
                 page.locator("input[data-field=uptime]").check()
                 page.locator("#title").fill("Server details")
                 page.locator("#save").click()
@@ -138,6 +138,29 @@ def main():
                 assert page.locator('.page-item[data-page=overview] input').is_disabled()
                 page.locator('#discard').click()
                 page.wait_for_function("!document.querySelector('#save').disabled")
+                page.locator('#add-widget').select_option('markdown')
+                page.locator('#add').click()
+                markdown=page.locator('.widget[data-id=markdown]').first
+                markdown.get_by_label('Markdown',exact=True).fill('# Today\n- **Coffee**\n- Read the notes')
+                markdown.get_by_label('Widget title (optional)',exact=True).fill('Daily plan')
+                markdown.get_by_label('Row',exact=True).select_option('1')
+                markdown.get_by_role('button',name='Duplicate Markdown',exact=True).click()
+                assert page.locator('.widget[data-id=markdown]').count()==2
+                second=page.locator('.widget[data-id=markdown]').nth(1)
+                second.get_by_label('Markdown',exact=True).fill('## Later\nA different note')
+                second.get_by_label('Row',exact=True).select_option('1')
+                page.locator('#preview-button').click()
+                page.wait_for_function("document.querySelector('#message').textContent.includes('overlap')")
+                second.get_by_label('Column',exact=True).select_option('2')
+                page.locator('#save').click()
+                page.wait_for_function("document.querySelector('#draft-state').textContent==='Saved layout preview'")
+                saved=json.loads((Path(temp)/'layout.json').read_text())
+                markdowns=[w for w in saved['pages']['nas']['widgets'] if w['id']=='markdown']
+                assert len(markdowns)==2 and markdowns[0]['key']!=markdowns[1]['key']
+                assert markdowns[0]['column']==1 and markdowns[1]['column']==2
+                assert markdowns[0]['content']!=markdowns[1]['content']
+                page.set_viewport_size({'width':390,'height':844})
+                assert page.evaluate('document.documentElement.scrollWidth<=innerWidth')
                 assert not errors, errors
                 browser.close()
                 print("Editor browser checks passed: auth, reorder/hide, tickers, preview, save, export/import, reload, mobile.")

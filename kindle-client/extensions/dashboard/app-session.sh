@@ -72,14 +72,15 @@ while IFS= read -r native_event <&3; do
     event_name=${native_event%% *}
     case "$event_name" in
         listener-ended) log 'ERROR native event listener ended; restoring normal power policy'; break ;;
-        powerButtonPressed) app_power_release; manual_sleep=1; continue ;;
-        outOfScreenSaver|resuming) manual_sleep=0 ;;
+        powerButtonPressed) log 'Native power button: release app sleep hold'; app_power_release; manual_sleep=1; continue ;;
+        outOfScreenSaver|resuming) log "Native wake event=$event_name"; manual_sleep=0 ;;
         appStarted|appPaused|appStateChange|processExited|goingToScreenSaver|readyToSuspend|suspending|usbPlugIn|usbPlugOut|charging|notCharging|startup-check|audit) ;;
         *) continue ;;
     esac
     kill -0 "$HTTP_PID" 2>/dev/null && kill -0 "$EVENT_PID" 2>/dev/null || break
     phase=$(probe lipc-get-prop com.lab126.powerd state)
     case "$phase" in screenSaver|suspended|readyToSuspend)
+        log "Native sleep event=$event_name state=$phase; app hold released"
         app_power_release; continue ;;
     esac
     if app_foreground; then
@@ -89,7 +90,7 @@ while IFS= read -r native_event <&3; do
         app_power_release
         current_app=$(probe lipc-get-prop com.lab126.appmgrd activeApp)
         if [ "$was_foreground" = 1 ] && [ -n "$current_app" ]; then
-            case "$current_app" in org.kindledashboard.app|app://org.kindledashboard.app) ;; *) break ;; esac
+            case "$current_app" in org.kindledashboard.app|app://org.kindledashboard.app) ;; *) log "Native foreground changed event=$event_name app=$current_app; closing dashboard session"; break ;; esac
         fi
         [ "$event_name" != startup-check ] || { log 'ERROR native UI did not reach foreground'; break; }
     fi

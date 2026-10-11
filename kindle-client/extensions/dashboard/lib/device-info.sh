@@ -14,6 +14,24 @@ charging_value() {
     esac
 }
 
+external_power() {
+    external=$(probe lipc-get-prop com.lab126.powerd isUsbConnected)
+    case "$external" in 0|1) printf '%s' "$external"; return ;; esac
+    # This firmware exposes the cable flag in battStateInfo, not isUsbConnected.
+    # Match only the named JSON boolean; never treat battery/online as USB power.
+    external=$(probe lipc-get-prop com.lab126.powerd battStateInfo | tr -d '[:space:]')
+    case "$external" in
+        *'"usb":true'*) printf 1; return ;;
+        *'"usb":false'*) printf 0; return ;;
+    esac
+    case "$VERIFIED_EXTERNAL_POWER_PATH" in
+        /sys/class/power_supply/*/present|/sys/class/power_supply/*/online)
+            external=$(read_first "$VERIFIED_EXTERNAL_POWER_PATH")
+            case "$external" in 0|1) printf '%s' "$external"; return ;; esac ;;
+    esac
+    return 1
+}
+
 read_device_info() {
     BATTERY='' CHARGING='' WIDTH=$SCREEN_WIDTH HEIGHT=$SCREEN_HEIGHT
     MODEL=$DEVICE_MODEL FIRMWARE=unknown
@@ -65,6 +83,7 @@ read_device_info() {
     if [ -z "$MODEL" ]; then MODEL=$(awk -F: '/^Hardware/ {sub(/^[ \t]+/, "", $2); print $2; exit}' /proc/cpuinfo 2>/dev/null); fi
     MODEL=$(safe_label "${MODEL:-unknown}")
     if [ -r /etc/pretty_version ]; then FIRMWARE=$(read_first /etc/pretty_version)
-    elif [ -r /etc/os-release ]; then FIRMWARE=$(awk -F= '$1 == "PRETTY_NAME" {print $2; exit}' /etc/os-release); fi
+    elif [ -r /etc/os-release ]; then FIRMWARE=$(awk -F= '$1 == "PRETTY_NAME" {print $2; exit}' /etc/os-release)
+    elif [ -r /etc/version.txt ]; then FIRMWARE=$(head -n 1 /etc/version.txt | sed 's/^System Software Version: //'); fi
     return 0
 }

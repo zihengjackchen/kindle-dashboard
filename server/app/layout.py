@@ -18,28 +18,46 @@ FIELDS = {
             "cpu_iowait_percent", "cpu_temperature_c", "network_rx_mbps", "network_tx_mbps", "disk_read_mbps", "disk_write_mbps",
             "scrub_state", "scrub_errors", "scrub_finished", "disk_count", "app_count", "apps_running", "apps_stopped", "alert_levels"],
     "backup": ["name", "state", "last_success", "last_run", "duration", "schedule", "progress", "transfer", "enabled"],
-    "device": ["battery", "charging", "rssi", "frontlight", "uptime_seconds", "storage_free_mib", "firmware", "device", "resolution", "fetch_seconds", "fetch_failures", "last_success"],
+    "device": ["battery", "charging", "rssi", "frontlight", "uptime_seconds", "storage_free_mib", "firmware", "device", "resolution", "fetch_seconds", "fetch_failures", "last_success", "external_power", "sleep_inhibited", "power_policy"],
     "notes": ["notes"],
+    "markdown": ["content"],
 }
 DEFAULT_FIELDS = {
     "weather": ["location", "temperature", "condition", "high_low", "precipitation", "forecast"],
     "nas": ["pool_health", "used_percent", "cpu_percent", "memory_available_gib", "alerts"],
     "markets": ["price", "change", "percent"], "backup": ["state", "last_success", "schedule"],
-    "device": ["battery", "charging", "rssi"], "notes": ["notes"],
+    "device": ["battery", "charging", "rssi"], "notes": ["notes"], "markdown": ["content"],
 }
 
 
 class Widget(BaseModel):
     model_config = ConfigDict(extra="forbid")
-    id: Literal["weather", "nas", "markets", "notes", "device", "backup"]
+    id: Literal["weather", "nas", "markets", "notes", "device", "backup", "markdown"]
+    key: str | None = Field(default=None, max_length=48, pattern=r"^[A-Za-z0-9_-]+$")
+    title: str = Field(default="", max_length=40)
+    row: int | None = Field(default=None, ge=1, le=12)
+    column: Literal[1, 2] = 1
     width: Literal["half", "full"] = "half"
     size: Literal["small", "medium", "large"] = "medium"
     fields: list[str] | None = Field(default=None, max_length=32)
+    content: str = Field(default="", max_length=4000)
+    overflow: Literal["shrink", "truncate"] = "shrink"
+    tickers: list[str] | None = Field(default=None, min_length=1, max_length=32)
+    market_columns: Literal[2, 3] | None = None
+    weather_units: Literal["source", "both"] | None = None
+    notes: list[str] | None = Field(default=None, max_length=5)
+    backup_index: int = Field(default=0, ge=0, le=7)
 
     @model_validator(mode="after")
     def valid_fields(self):
         if self.fields is not None and (len(set(self.fields)) != len(self.fields) or not set(self.fields) <= set(FIELDS[self.id])):
             raise ValueError("Unknown or duplicate widget fields")
+        if self.tickers is not None and (len(set(self.tickers)) != len(self.tickers) or not set(self.tickers) <= set(SUPPORTED_SYMBOLS)):
+            raise ValueError("Choose unique supported symbols")
+        if self.notes is not None and any(len(line) > 100 or any(ord(c) < 32 for c in line) for line in self.notes):
+            raise ValueError("Notes must be single lines of at most 100 characters")
+        if self.row is not None and self.width == "full" and self.column != 1:
+            raise ValueError("Full-width widgets start in the left column")
         return self
 
 
@@ -54,7 +72,7 @@ class PageLayout(BaseModel):
         Widget(id="weather"), Widget(id="nas"),
         Widget(id="markets", width="full", size="large"),
         Widget(id="backup", size="small"), Widget(id="device", size="small"),
-    ], min_length=1, max_length=6)
+    ], min_length=1, max_length=12)
     tickers: list[str] = Field(default_factory=lambda: list(WATCHLIST), min_length=1, max_length=32)
     notes_title: str = Field(default="Agenda & notes", min_length=1, max_length=32)
     notes: list[str] = Field(default_factory=list, max_length=5)
@@ -62,8 +80,17 @@ class PageLayout(BaseModel):
     @field_validator("widgets")
     @classmethod
     def unique_widgets(cls, value):
-        if len({w.id for w in value}) != len(value):
-            raise ValueError("Each widget can appear only once")
+        keys = [w.key or w.id for w in value]
+        if len(set(keys)) != len(keys):
+            raise ValueError("Each widget instance needs a unique key")
+        occupied = set()
+        for widget in value:
+            if widget.row is None:
+                continue
+            cells = {(widget.row, c) for c in ((1, 2) if widget.width == "full" else (widget.column,))}
+            if occupied & cells:
+                raise ValueError("Widget positions overlap")
+            occupied.update(cells)
         return value
 
     @field_validator("tickers")
@@ -133,8 +160,8 @@ class LayoutStore:
         if self.path and self.path.exists():
             try:
                 with self.path.open("rb") as stream:
-                    raw = stream.read(16385)
-                if len(raw) > 16384:
+                    raw = stream.read(65537)
+                if len(raw) > 65536:
                     raise ValueError("Layout too large")
                 self.value = Layout.model_validate_json(raw)
             except (ValueError, OSError):
@@ -154,7 +181,7 @@ class LayoutStore:
                 with tempfile.NamedTemporaryFile(mode="w", encoding="utf-8", dir=self.path.parent,
                                                  prefix=".layout-", delete=False) as stream:
                     temporary = stream.name
-                    stream.write(value.model_dump_json(indent=2))
+                    stream.write(value.model_dump_json())
                     stream.flush()
                     os.fsync(stream.fileno())
                 os.replace(temporary, self.path)

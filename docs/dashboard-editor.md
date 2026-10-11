@@ -49,3 +49,34 @@ memory, network, apps and scrub readings above backup and Kindle details. Explic
 saved page overrides are retained. All pages keep one generated timestamp and a
 warning when their source data is older or unavailable; a fresh image is not a promise
 of fresh market quotes. Missing metrics remain dashes.
+
+## Widget instances and placement
+
+Add up to twelve widgets per page, including multiple widgets of the same type.
+Each instance has its own key, fields, title and options. Use **Duplicate** under
+**Placement & content** to start from an existing widget. Watchlist widgets can
+select independent symbols and columns; weather cards can override units; notes
+can override page notes; backup cards can select individual reported jobs.
+Blank overrides inherit page settings. NAS field tooltips show reported values.
+
+Choose **Row** and **Column** to reserve cells in the two-column grid. Full-width
+cards occupy both cells. Overlaps are rejected. Auto cards fill remaining cells.
+Row height follows its largest widget. Dragging or arrows returns the page to
+automatic placement. Exported files retain all per-widget preferences.
+
+## Markdown
+
+Choose **Add a widget > Markdown**. Enter up to 4,000 characters and an optional
+title. Supported: headings (# through ###), bold, bulleted/numbered lists, quotes,
+inline/fenced code and link labels. HTML stays literal text; images become alt
+labels; no URL or file is fetched. This is not a complete CommonMark browser.
+
+**Shrink, then truncate** reduces text to a readable minimum, then adds an ellipsis
+when it still cannot fit. **Keep text size, truncate** preserves the text size.
+All drawing is clipped to the card. Increase height or width for more content.
+The preview shows the final fit. Layouts/imports are limited to 64 KiB.
+
+Kindle fields include external power, idle sleep hold and configured power policy.
+These are observations from the last fetch, not live controls. A sleep hold may
+belong to another app such as the SSH launcher. The editor does not enable
+unverified suspend/wake or remotely change the device's power policy.

@@ -18,6 +18,7 @@ diagnostic_report() {
     cat /proc/cpuinfo 2>/dev/null
     cat /etc/pretty_version 2>/dev/null
     cat /etc/os-release 2>/dev/null
+    cat /etc/version.txt 2>/dev/null
     free 2>/dev/null
     df -h
     for cmd in eips fbink curl wget lipc-get-prop lipc-set-prop gasgauge-info timeout fbset pngcheck powerd lipc-probe lipc-wait-event mkfifo sqlite3 mesquite busybox cksum; do
@@ -38,8 +39,13 @@ diagnostic_report() {
         probe find /sys/devices -maxdepth 8 -type f \( -name capacity -o -name battery_capacity -o -name charging -o -name status \) | head -n 100
         printf '\n--- Read-only power capabilities ---\n'
         cat /sys/power/state 2>/dev/null
-        for prop in battLevel isCharging state flIntensity isUsbConnected preventScreenSaver; do
+        for prop in battLevel isCharging battStateInfo state flIntensity isUsbConnected preventScreenSaver; do
             printf 'powerd.%s: ' "$prop"; probe lipc-get-prop com.lab126.powerd "$prop"; printf '\n'
+        done
+        printf '\n--- RTC capabilities (read-only; no alarms armed) ---\n'
+        for attr in /sys/class/rtc/rtc*/name /sys/class/rtc/rtc*/wakealarm; do
+            [ -r "$attr" ] || continue
+            printf '%s: ' "$attr"; head -c 128 "$attr"; printf '\n'
         done
         printf 'cmd.wirelessEnable: '; probe lipc-get-prop com.lab126.cmd wirelessEnable
         if command -v lipc-probe >/dev/null 2>&1 && command -v timeout >/dev/null 2>&1; then

@@ -81,13 +81,16 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     async def read_layout(request: Request):
         raw = bytearray()
         async for chunk in request.stream():
-            if len(raw) + len(chunk) > 16384:
-                raise HTTPException(413, "Layout is limited to 16 KiB")
+            if len(raw) + len(chunk) > 65536:
+                raise HTTPException(413, "Layout is limited to 64 KiB")
             raw.extend(chunk)
         try:
-            return Layout.model_validate_json(bytes(raw))
+            value = Layout.model_validate_json(bytes(raw))
         except ValidationError:
             raise HTTPException(422, "Invalid layout: check widget IDs, sizes, symbols and note lengths") from None
+        if len(value.model_dump_json().encode()) > 65536:
+            raise HTTPException(413, "Expanded layout exceeds 64 KiB; shorten widget content")
+        return value
 
     @app.get("/layout", dependencies=[Depends(editor_auth)])
     def get_layout(response: Response):

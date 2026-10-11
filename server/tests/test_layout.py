@@ -67,7 +67,7 @@ def test_invalid_layout_never_changes_saved_preferences(editor, change):
 def test_bounded_body_and_corrupt_disk(editor, tmp_path):
     client, settings = editor
     for method, path in (("PUT", "/layout"), ("POST", "/preview.png")):
-        assert client.request(method, path, content=b" "*16385, headers=AUTH).status_code == 413
+        assert client.request(method, path, content=b" "*65537, headers=AUTH).status_code == 413
         assert client.request(method, path, content=b"{broken", headers=AUTH).status_code == 422
     (tmp_path / "layout.json").write_text("{broken")
     assert LayoutStore(settings.layout_path).get() == Layout()

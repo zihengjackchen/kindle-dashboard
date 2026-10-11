@@ -35,6 +35,8 @@ mkdir "$STATE_DIR/native-sleep-test.lock" 2>/dev/null || {
 }
 RUNTIME='' EVENT_PID='' TEST_ARMED=0
 REPORT=$LOG_DIR/native-sleep-test.txt
+# Invoked by the EXIT trap below (older ShellCheck versions miss numeric trap 0).
+# shellcheck disable=SC2317,SC2329
 test_cleanup() {
     [ -z "$EVENT_PID" ] || kill "$EVENT_PID" 2>/dev/null || :
     if [ -n "$RUNTIME" ]; then

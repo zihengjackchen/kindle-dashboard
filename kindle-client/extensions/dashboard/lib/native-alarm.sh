@@ -6,11 +6,14 @@ native_alarm_profile() {
     [ "$NATIVE_ALARM_EXPERIMENT" = 1 ] || { fail 'Native alarm experiment is disabled'; return 1; }
     check_enabled || return 1
     read_device_info
+    # Every condition must hold; the failure block intentionally handles any false term.
+    # shellcheck disable=SC2015
     [ -n "$NATIVE_ALARM_MODEL" ] && [ "$MODEL" = "$NATIVE_ALARM_MODEL" ] &&
         [ -n "$NATIVE_ALARM_FIRMWARE" ] && [ "$FIRMWARE" = "$NATIVE_ALARM_FIRMWARE" ] &&
         [ -n "$NATIVE_ALARM_KERNEL" ] && [ "$(uname -r)" = "$NATIVE_ALARM_KERNEL" ] || {
         fail 'Native alarm profile does not match this model, firmware and kernel'; return 1;
     }
+    # shellcheck disable=SC2015
     is_uint "$BATTERY" && [ "$BATTERY" -ge 20 ] || {
         fail 'Native alarm experiment requires a known battery level of at least 20%'; return 1;
     }
@@ -20,6 +23,7 @@ native_alarm_profile() {
     [ "$(probe lipc-get-prop com.lab126.powerd state)" = active ] || {
         fail 'Unlock Kindle normally before starting the experiment'; return 1;
     }
+    # shellcheck disable=SC2015
     [ ! -f "$STATE_DIR/app.pid" ] && [ ! -f "$STATE_DIR/active" ] || {
         fail 'Stop Dashboard before starting the native alarm experiment'; return 1;
     }

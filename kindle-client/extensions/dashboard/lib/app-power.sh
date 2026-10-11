@@ -11,7 +11,7 @@ frontlight_off() {
     [ "$APP_FRONTLIGHT_OFF" = 1 ] || return 0
     if [ "$MOCK_MODE" = 1 ]; then log 'MOCK frontlight off'; return 0; fi
     light=$(probe lipc-get-prop com.lab126.powerd flIntensity)
-    is_uint "$light" && [ "$light" -le 24 ] || { log 'Frontlight interface unavailable'; return 1; }
+    if ! is_uint "$light" || [ "$light" -gt 24 ]; then log 'Frontlight interface unavailable'; return 1; fi
     [ -f "$STATE_DIR/prior-light" ] || printf '%s\n' "$light" > "$STATE_DIR/prior-light"
     # PW2/PW3 LIPC level 0 is a faint light. Use only a user-verified path.
     if [ -n "$VERIFIED_FRONTLIGHT_PATH" ] && [ -w "$VERIFIED_FRONTLIGHT_PATH" ]; then

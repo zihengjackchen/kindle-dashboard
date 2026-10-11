@@ -31,9 +31,13 @@ bundle_action() {
             # Keep existing telemetry/auth/deadline rules; change only endpoint/type.
             DASHBOARD_URL=${DASHBOARD_URL%/dashboard.png}/dashboard-bundle.json
             build_url || { respond '{"error":"Invalid server URL"}'; return; }
+            # Consumed by record_fetch in the sourced client library.
+            # shellcheck disable=SC2034
             FETCH_STARTED=$(date +%s)
             battery_sample fetch
             TMP_IMAGE=$(mktemp "$CACHE_DIR/bundle.tmp.XXXXXX") || return 1
+            # Consumed by http_fetch and the shared cleanup trap.
+            # shellcheck disable=SC2034
             TMP_HEADERS=$(mktemp "$CACHE_DIR/headers.tmp.XXXXXX") || return 1
             MAX_IMAGE_BYTES=8388608
             if network_prepare && http_fetch application/json && [ -s "$TMP_IMAGE" ] && [ "$(wc -c < "$TMP_IMAGE")" -le "$MAX_IMAGE_BYTES" ]; then

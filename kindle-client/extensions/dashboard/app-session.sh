@@ -66,7 +66,7 @@ log 'Native event supervision active; fallback audit=1800s; browser heartbeat di
 was_foreground=0
 manual_sleep=0
 while IFS= read -r native_event <&3; do
-    [ "$(read_first "$STATE_DIR/app-key")" = "$APP_KEY" ] && ! disabled || break
+    if [ "$(read_first "$STATE_DIR/app-key")" != "$APP_KEY" ] || disabled; then break; fi
     # -l prints the source before the event; ignore unrelated power telemetry.
     case "$native_event" in com.lab126.*\ *) native_event=${native_event#* } ;; esac
     event_name=${native_event%% *}
@@ -92,7 +92,7 @@ while IFS= read -r native_event <&3; do
         appStarted|appPaused|appStateChange|processExited|goingToScreenSaver|readyToSuspend|suspending|usbPlugIn|usbPlugOut|charging|notCharging|startup-check|audit) ;;
         *) continue ;;
     esac
-    kill -0 "$HTTP_PID" 2>/dev/null && kill -0 "$EVENT_PID" 2>/dev/null || break
+    if ! kill -0 "$HTTP_PID" 2>/dev/null || ! kill -0 "$EVENT_PID" 2>/dev/null; then break; fi
     phase=$(probe lipc-get-prop com.lab126.powerd state)
     case "$phase" in screenSaver|suspended|readyToSuspend)
         log "Native sleep event=$event_name state=$phase; app hold released"

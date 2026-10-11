@@ -5,6 +5,7 @@
 . "$DASHBOARD_DIR/lib/client.sh"
 # shellcheck source=../lib/app-power.sh
 . "$DASHBOARD_DIR/lib/app-power.sh"
+# shellcheck source=../lib/bundle.sh
 . "$DASHBOARD_DIR/lib/bundle.sh"
 respond() { printf 'Content-Type: application/json\r\nCache-Control: no-store\r\n\r\n%s\n' "$1"; }
 if [ "$REQUEST_METHOD" != POST ] || [ -z "$HTTP_X_DASHBOARD_SESSION" ] || [ "$HTTP_X_DASHBOARD_SESSION" != "$(read_first "$STATE_DIR/app-key")" ] || disabled; then

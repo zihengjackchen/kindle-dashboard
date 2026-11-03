@@ -364,3 +364,25 @@ CJK fonts plus license from the authenticated Debian package. The normal public
 Dockerfile built successfully in GitHub. The NAS keeps its previous image and
 configuration under the November 2 deployment backup for rollback.
 
+# Local Markdown reader — November 2, 2026
+
+Installed and launched the ES5 Markdown client on the tested Paperwhite after SSH
+became available. Its committed version 2 bundle contains exactly `overview` and
+`finance`, with one PNG (`overview`) and the original 3,044-character report text.
+The native app renders the report as two pages at the default size. A+ reflows
+it to three pages, and the second page renders correctly in a framebuffer capture
+taken atomically on the device. Previous returns through the report to the main
+dashboard. Temporary bounded button-test code was removed from the extension,
+native and HTTP-served assets, and the default font preference restored.
+
+The main dashboard has 14 selected symbols, a half-width Codex card with six
+available usage/activity fields, additional device details, and a backup row.
+Weather, separate market pages and the NAS page are disabled in this installation's
+carousel. The normal dashboard page still contains weather and NAS widgets.
+
+The app remained foreground with driver actual brightness zero. GitHub workflow
+41588302496 passed all 217 Linux tests, ShellCheck, Docker smoke checks and public
+amd64/arm64 image publication. Desktop reader checks also covered unsafe Markdown,
+final-page text visibility, offline navigation, font resizing and malformed-report
+cache retention. Overnight power consumption remains unmeasured.
+

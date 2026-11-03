@@ -133,7 +133,18 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--pool", required=True)
     parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("--report-source", type=Path)
+    parser.add_argument("--report-output", type=Path)
     args = parser.parse_args()
+    if args.report_source:
+        if not args.report_output:
+            parser.error('--report-output is required with --report-source')
+        from export_stock_report import export_report
+        try:
+            day = export_report(args.report_source, args.report_output)
+            print("Stock report exported: " + day)
+        except (OSError, ValueError, KeyError, TypeError):
+            print("Stock report export failed; previous report retained")
     try: data = export(args.pool)
     except (OSError, ValueError, TypeError, KeyError, StopIteration, subprocess.SubprocessError) as exc:
         parser.exit(1, f"Export failed ({type(exc).__name__}); previous snapshot retained. Check version and pool name.\n")

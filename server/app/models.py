@@ -32,3 +32,8 @@ class DashboardRequest(BaseModel):
     @classmethod
     def clamp_dimension(cls, value: int) -> int:
         return max(MIN_DIMENSION, min(MAX_DIMENSION, value))
+
+
+class ReportPreviewRequest(DashboardRequest):
+    number: int = Field(default=1, ge=1, le=27)
+    font_size: int = Field(default=30, ge=24, le=40)

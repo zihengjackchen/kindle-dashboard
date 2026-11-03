@@ -1,7 +1,7 @@
 FROM python:3.13-slim-bookworm
 ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1 PIP_NO_CACHE_DIR=1
 WORKDIR /service
-RUN apt-get update && apt-get install -y --no-install-recommends fonts-dejavu-core tzdata \
+RUN apt-get update && apt-get install -y --no-install-recommends fonts-dejavu-core fonts-noto-cjk tzdata \
     && rm -rf /var/lib/apt/lists/* \
     && useradd --uid 10001 --create-home dashboard \
     && mkdir -p /state /data && chown 10001:10001 /state /data

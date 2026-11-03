@@ -11,6 +11,7 @@ services:
       DASHBOARD_STATE_PATH: /state/contacts.json
       DASHBOARD_LAYOUT_PATH: /state/layout.json
       CODEX_USAGE_PATH: /data/codex/usage.json
+      DASHBOARD_REPORT_DIRECTORY: "${DASHBOARD_REPORT_DIRECTORY:-}"
     volumes:
       - ./data:/data:ro
       - contact-state:/state

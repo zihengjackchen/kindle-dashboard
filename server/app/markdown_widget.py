@@ -29,15 +29,16 @@ def blocks(source):
 
 
 def runs(text, bold, code):
-    for part in re.split(r"(\*\*[^*]+\*\*|`[^`]+`)", text):
+    for part in re.split(r"(\*\*[^*]+\*\*|`[^`]+`|\*[^*]+\*)", text):
         if not part:
             continue
         strong = part.startswith("**") and part.endswith("**")
         mono = part.startswith("`") and part.endswith("`")
-        yield part[2:-2] if strong else part[1:-1] if mono else part, bold or strong, code or mono
+        italic = not strong and part.startswith("*") and part.endswith("*")
+        yield part[2:-2] if strong else part[1:-1] if mono or italic else part, bold or strong, code or mono, italic
 
 
-def measure(draw, source, width, base, path):
+def measure(draw, source, width, base, path, face_factory=None):
     result = []
     for text, factor, strong, code in blocks(source):
         pixels = max(8, round(base*factor))
@@ -46,8 +47,8 @@ def measure(draw, source, width, base, path):
         if not text:
             result.append(([], max(6, round(base*.5))))
             continue
-        for part, bold, shaded in runs(text, strong, code):
-            face = font(pixels, path, bold)
+        for part, bold, shaded, italic in runs(text, strong, code):
+            face = face_factory(pixels, bold, italic) if face_factory else font(pixels, path, bold)
             for word in re.findall(r"\s+|\S+", part):
                 length = draw.textlength(word, font=face)
                 if x and x+length > width:

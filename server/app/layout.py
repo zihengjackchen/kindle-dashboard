@@ -121,6 +121,8 @@ class Layout(PageLayout):
     refresh_minutes: int = Field(default=60, ge=5, le=1440)
     night_minutes: int = Field(default=240, ge=15, le=1440)
     rotation_minutes: int = Field(default=0, ge=0, le=1440)
+    report_enabled: bool = False
+    report_font_size: int = Field(default=30, ge=24, le=40)
 
     @field_validator("page_order")
     @classmethod

@@ -74,7 +74,7 @@
     function validateBundle(value, fresh, done) {
         var next={}, seen={}, n=0, list=value && value.settings && value.settings.pages;
         function invalid() { done('Invalid image bundle; previous pages retained'); }
-        if (!value || value.version!==1 || !list || !list.length || list.length>5 || !value.images ||
+        if (!value || value.version!==1 || !list || !list.length || list.length>32 || !value.images ||
             typeof value.width!=='number' || typeof value.height!=='number' ||
             value.width%1!==0 || value.height%1!==0 ||
             value.width<320 || value.width>2560 || value.height<320 || value.height>2560 ||
@@ -87,7 +87,7 @@
             var page=list[n++], candidate=new Image();
             if (!page || typeof page.id!=='string') { invalid(); return; }
             var data=value.images[page.id];
-            if (!/^(overview|weather|markets-1|markets-2|nas)$/.test(page.id) || seen[page.id] ||
+            if (!/^(overview|weather|markets-1|markets-2|nas|report-([1-9]|1[0-9]|2[0-7]))$/.test(page.id) || seen[page.id] ||
                 typeof page.name!=='string' || typeof data!=='string' || data.length>8388608 ||
                 data.slice(0,11)!=='iVBORw0KGgo') { invalid(); return; }
             seen[page.id]=true;

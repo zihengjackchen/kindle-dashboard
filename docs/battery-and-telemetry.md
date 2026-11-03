@@ -16,7 +16,10 @@ Implemented savings: NAS-side rendering, default hourly refresh, four-hour night
 refresh, at least four-hour refresh below 20% when not charging, cached-image
 fallback without a tight retry loop, foreground checks, and cleanup on exit.
 The app sets the native frontlight level to zero, then restores the previous
-level on exit. True LED-off on this Paperwhite has not been established.
+level on exit. With a verified hardware path configured, it additionally writes
+raw brightness zero and checks the driver's actual output. Native wake events
+reapply off without a new polling loop. Physical darkness and runtime remain
+hardware acceptance checks; a zero setting alone is not a battery-life estimate.
 Wi-Fi remains under the normal Kindle policy; this client does not deliberately
 turn the radio off between image fetches. Automatic page rotation is optional
 and switches already-cached images without additional downloads.

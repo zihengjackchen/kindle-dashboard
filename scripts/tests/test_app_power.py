@@ -3,6 +3,45 @@ from pathlib import Path
 from test_client import SH, EXT, nas, setup  # noqa: F401
 
 
+def test_hardware_light_off_wake_restore_and_failed_recovery(setup):
+    env,*_=setup
+    body='''
+    . "$DASHBOARD_DIR/lib/client.sh"
+    . "$DASHBOARD_DIR/lib/app-power.sh"
+    MOCK_MODE=0
+    VERIFIED_FRONTLIGHT_PATH=/sys/class/backlight/max77696-bl/brightness
+    light=18; hardware=1382; foreground=1; writes=0; broken=0
+    app_foreground() { [ "$foreground" = 1 ]; }
+    probe() {
+        if [ "$1" = lipc-get-prop ]; then echo "$light";
+        else light=$4; hardware=3; fi
+    }
+    frontlight_raw_read() { echo "$hardware"; }
+    frontlight_raw_write() { [ "$broken" = 0 ] || return 1; hardware=$2; writes=$((writes+1)); }
+    frontlight_off
+    [ "$hardware:$light" = 0:0 ] || exit 11
+    frontlight_off
+    [ "$writes" = 1 ] || exit 12
+    # Native wake relights the LEDs even though the UI still says zero.
+    hardware=3
+    frontlight_off
+    [ "$hardware" = 0 ] || exit 13
+    [ "$(cat "$STATE_DIR/prior-light-raw")" = 1382 ] || exit 14
+    foreground=0; hardware=1200; light=17
+    frontlight_off
+    [ "$hardware:$light" = 1200:17 ] || exit 15
+    broken=1
+    app_light_restore && exit 16
+    [ -f "$STATE_DIR/prior-light-raw" ] || exit 17
+    broken=0
+    app_light_restore
+    [ "$hardware:$light" = 1382:18 ] || exit 18
+    [ ! -f "$STATE_DIR/prior-light-raw" ] || exit 19
+    '''
+    result=subprocess.run([SH,'-c',body],env=env,capture_output=True,text=True,timeout=15)
+    assert result.returncode==0,result.stderr
+
+
 def test_power_and_light_are_scoped_and_restored(setup):
     env,data,*_=setup
     # Shell functions fake only LIPC. Run the actual power ownership logic.

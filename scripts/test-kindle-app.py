@@ -46,7 +46,11 @@ def main():
                     value={'version':1,'width':size[0],'height':size[1],'battery':90,'charging':False,
                            'settings':{'pages':[{'id':'overview','name':'Overview'},{'id':'nas','name':'Server'}],
                                        'refresh_minutes':5,'night_minutes':15,'rotation_minutes':0},
-                           'images':{'overview':encoded,'nas':'iVBORw0KGgoBROKEN' if corrupt[0] else encoded}}
+                           'images':{'overview':encoded,'nas':encoded}}
+                    for report in range(1,7):
+                        key='report-'+str(report)
+                        value['settings']['pages'].append({'id':key,'name':'Stock update '+str(report)})
+                        value['images'][key]='iVBORw0KGgoBROKEN' if corrupt[0] and report==6 else encoded
                     if not corrupt[0]: saved[0]=value
                     request.fulfill(json=value,headers={'X-Dashboard-Revision':'3000000000'})
                 elif action.startswith('cached='):
@@ -77,6 +81,8 @@ def main():
         page.wait_for_function("document.querySelector('#refresh').textContent==='Refresh' && !document.querySelector('#refresh').disabled")
         page.wait_for_timeout(300)
         assert len(calls)==count  # Navigation makes no bridge or NAS requests.
+        for _ in range(7): page.locator('#next').click()
+        assert len(calls)==count  # Six report pages also navigate entirely offline.
         page.set_viewport_size({'width':800,'height':600})
         page.clock.fast_forward(1000)
         page.wait_for_function("document.querySelector('#image').naturalWidth===784")

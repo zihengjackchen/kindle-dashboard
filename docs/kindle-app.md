@@ -89,7 +89,7 @@ unless the native foreground/unlocked guard succeeds. Settings are reloaded on
 each fetch. Native sleep remains available; cached restoration on resume depends
 on the firmware delivering app lifecycle events.
 
-## Frontlight and continuous display: hardware acceptance required
+## Frontlight and continuous display
 
 Entry reads/saves `powerd.flIntensity`, then sets zero. On older Paperwhites zero
 may mean a faint light. **True off is not claimed until checked on this device.**
@@ -97,6 +97,11 @@ The diagnostic report lists readable `/sys/class/backlight/*/brightness` files.
 After confirming the hardware path and actual light behavior, set
 `VERIFIED_FRONTLIGHT_PATH` in `config.local.sh`. The script saves/restores both raw
 brightness and the native level. No arbitrary sysfs discovery writes occur.
+Hardware-off now verifies both the brightness target and `actual_brightness`
+when available. Foreground wake/app events and the existing 30-minute audit
+reapply zero if native power management relights the LEDs. Already-zero lights
+need no write. Exit restores the saved raw level and native setting; a failed
+restore retains recovery state for Stop Dashboard to retry.
 
 Public defaults keep both sleep-hold options disabled. The configured installation
 now has `KEEP_AWAKE_ON_BATTERY=1` and `KEEP_AWAKE_PLUGGED=1`. The battery option

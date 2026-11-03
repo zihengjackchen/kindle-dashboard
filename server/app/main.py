@@ -11,11 +11,12 @@ from pydantic import ValidationError
 from starlette.concurrency import run_in_threadpool
 
 from .config import Settings
-from .models import DashboardRequest
+from .models import DashboardRequest, ReportPreviewRequest
 from .renderer import render_dashboard
 from .snapshots import SUPPORTED_SYMBOLS, load_snapshot
 from .telemetry import ContactStore
 from .layout import Layout, LayoutStore, FIELDS, DEFAULT_FIELDS, PAGE_IDS
+from .reports import Report, ReportStore, render_report
 
 logger = logging.getLogger("dashboard")
 
@@ -25,6 +26,13 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app = FastAPI(title="Kindle Dashboard", docs_url=None, redoc_url=None, openapi_url=None)
     contacts = ContactStore(settings.state_path)
     layouts = LayoutStore(settings.layout_path)
+    reports = ReportStore(settings.report_directory)
+
+    def report_images(data, font_size):
+        report = reports.get()
+        if report is None:
+            report = Report("unavailable", "", "No saved stock update is available yet.\n\nRefresh after the NAS has generated a report.")
+        return render_report(report, data.width, data.height, font_size)
 
     def authenticate(authorization: Annotated[str | None, Header()] = None):
         if settings.api_token:
@@ -62,9 +70,15 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             images = {page: base64.b64encode(render_dashboard(
                 data.model_copy(update={"page": page}), settings, now, snapshot, value
             )).decode("ascii") for page in value.page_order}
+            client = client_settings(value)
+            if value.report_enabled:
+                for index, png in enumerate(report_images(data, value.report_font_size), 1):
+                    page = f"report-{index}"
+                    images[page] = base64.b64encode(png).decode("ascii")
+                    client["pages"].append({"id": page, "name": f"Stock update {index}"})
             payload = json.dumps({"version": 1, "width": data.width, "height": data.height,
                                   "generated_at": now.isoformat(), "battery": data.battery,
-                                  "charging": data.charging, "settings": client_settings(value),
+                                  "charging": data.charging, "settings": client,
                                   "images": images}, separators=(",", ":")).encode()
         except Exception:
             logger.exception("Bundle generation failed for dimensions=%sx%s", data.width, data.height)
@@ -72,6 +86,18 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         if len(payload) > 8 * 1024 * 1024:
             raise HTTPException(413, "Bundle exceeds 8 MiB")
         return Response(payload, media_type="application/json", headers={"Cache-Control": "no-store"})
+
+    @app.get("/report.png", dependencies=[Depends(authenticate)])
+    def report_preview(data: Annotated[ReportPreviewRequest, Query()]):
+        try:
+            images = report_images(data, data.font_size)
+        except Exception:
+            logger.exception("Report pagination failed")
+            raise HTTPException(503, "Report could not be rendered; previous bundle retained") from None
+        if data.number > len(images):
+            raise HTTPException(404, "Report page does not exist")
+        return Response(images[data.number-1], media_type="image/png",
+                        headers={"Cache-Control": "no-store", "X-Report-Pages": str(len(images))})
 
     def editor_auth(authorization: Annotated[str | None, Header()] = None):
         if not settings.api_token:

@@ -26,6 +26,9 @@ def main():
         env = dict(os.environ, API_TOKEN="local-editor-test", DASHBOARD_LAYOUT_PATH=str(Path(temp)/"layout.json"),
                    DASHBOARD_STATE_PATH=str(Path(temp)/"contacts.json"),
                    DASHBOARD_SNAPSHOT_PATH=str(ROOT/"docs/previews/sample-snapshot.json"))
+        reports=Path(temp)/'reports';reports.mkdir()
+        (reports/'2026-11-02.json').write_text(json.dumps({'local_date':'2026-11-02','created_at':'2026-11-02T16:00:00+00:00','content':'**Keep every condition.**\n\n'*120}))
+        env['DASHBOARD_REPORT_DIRECTORY']=str(reports)
         process = subprocess.Popen([sys.executable, "-m", "uvicorn", "app.main:app", "--app-dir", "server",
                                     "--host", "127.0.0.1", "--port", str(port), "--no-access-log"],
                                    cwd=ROOT, env=env, stdout=subprocess.DEVNULL, stderr=subprocess.PIPE)
@@ -169,6 +172,16 @@ def main():
                 saved=json.loads((Path(temp)/'layout.json').read_text())
                 assert any(w['id']=='codex' and 'lifetime_tokens' in w['fields'] for w in saved['pages']['nas']['widgets'])
                 page.set_viewport_size({'width':390,'height':844})
+                page.locator('#report-enabled').check()
+                page.locator('#report-preview').click()
+                page.wait_for_function("document.querySelector('#preview-label').textContent.startsWith('Stock update 1 /')")
+                page.locator('#report-next').click()
+                page.wait_for_function("document.querySelector('#preview-label').textContent.startsWith('Stock update 2 /')")
+                page.locator('#report-previous').click()
+                page.wait_for_function("document.querySelector('#preview-label').textContent.startsWith('Stock update 1 /')")
+                page.locator('#save').click()
+                page.wait_for_function("document.querySelector('#draft-state').textContent==='Saved layout preview'")
+                assert json.loads((Path(temp)/'layout.json').read_text())['report_enabled'] is True
                 assert page.evaluate('document.documentElement.scrollWidth<=innerWidth')
                 assert not errors, errors
                 browser.close()

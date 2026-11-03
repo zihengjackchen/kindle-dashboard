@@ -33,6 +33,7 @@ The overview, weather, markets and NAS images use **real data from the running s
 - **Choose the details:** custom titles, selectable fields, individual watchlists and backup jobs. Markdown shrinks or truncates to fit its card.
 - **Preview before saving:** render at the Kindle app's actual canvas size, zoom to actual pixels, and download the PNG. Draft changes stay separate until saved.
 - **Make several pages:** configure five page slots, rename and reorder them, enable optional rotation, and export/import layouts as JSON.
+- **Read the complete stock update:** append the NAS publisher's original Markdown as automatically paginated, cached report pages. Preview pages and text size in the editor. [Setup](docs/stock-reports.md).
 - **Keep it quiet:** large grayscale text, no permanent status strip, progress inside Refresh, and one image timestamp. Stale sources stay identifiable.
 
 | Widget | What it can show | Data comes from |

@@ -64,9 +64,14 @@
         timer=setTimeout(function () { load(true); },Math.max(5,minutes)*60000);
         if (settings.rotation_minutes > 0) rotate=setTimeout(function () { navigate(1); }, Math.max(1,settings.rotation_minutes)*60000);
     }
-    function showPage() {
+    function showPage(last) {
         var page=settings.pages[index], image=pages[page.id];
         if (!image) { message('No cached page. Tap Refresh.'); return; }
+        if(image.report) {
+            el('image').style.display='none';el('empty').style.display='none';
+            window.DashboardReport.show(image.report,last);message('');return;
+        }
+        if(window.DashboardReport)window.DashboardReport.hide();
         imageWidth=image.width; imageHeight=image.height; fitImage();
         el('image').src=image.url; el('image').style.display='inline'; el('empty').style.display='none';
         message('');
@@ -74,7 +79,7 @@
     function validateBundle(value, fresh, done) {
         var next={}, seen={}, n=0, list=value && value.settings && value.settings.pages;
         function invalid() { done('Invalid image bundle; previous pages retained'); }
-        if (!value || value.version!==1 || !list || !list.length || list.length>32 || !value.images ||
+        if (!value || (value.version!==1 && value.version!==2) || !list || !list.length || list.length>32 || !value.images ||
             typeof value.width!=='number' || typeof value.height!=='number' ||
             value.width%1!==0 || value.height%1!==0 ||
             value.width<320 || value.width>2560 || value.height<320 || value.height>2560 ||
@@ -86,6 +91,12 @@
             if (n===list.length) { done(null,next); return; }
             var page=list[n++], candidate=new Image();
             if (!page || typeof page.id!=='string') { invalid(); return; }
+            if(page.id==='finance' && value.version===2) {
+                if(seen.finance || typeof page.name!=='string' || !window.DashboardReport){invalid();return;}
+                try {next.finance={report:window.DashboardReport.prepare(value.report)};}
+                catch(reportError){invalid();return;}
+                seen.finance=true;decode();return;
+            }
             var data=value.images[page.id];
             if (!/^(overview|weather|markets-1|markets-2|nas|report-([1-9]|1[0-9]|2[0-7]))$/.test(page.id) || seen[page.id] ||
                 typeof page.name!=='string' || typeof data!=='string' || data.length>8388608 ||
@@ -151,8 +162,11 @@
         });
     }
     function navigate(delta) {
-        index=(index+delta+settings.pages.length)%settings.pages.length;
-        showPage();
+        if(!(settings.pages[index].id==='finance' && window.DashboardReport.step(delta))) {
+            index=(index+delta+settings.pages.length)%settings.pages.length;
+            if(settings.pages[index].id==='finance')window.DashboardReport.reset();
+            showPage(delta<0 && settings.pages[index].id==='finance');
+        }
         // Page navigation is entirely local and does not postpone refresh.
         clearTimeout(rotate);
         if (active && settings.rotation_minutes>0) rotate=setTimeout(function(){navigate(1);},Math.max(1,settings.rotation_minutes)*60000);
@@ -180,6 +194,7 @@
     window.onunload=pause;
     window.onresize=function () {
         fitImage(); clearTimeout(resizeTimer);
+        if(settings.pages[index].id==='finance' && window.DashboardReport)window.DashboardReport.layout();
         resizeTimer=setTimeout(function resized() {
             if (!active) return;
             if (busy) {resizeTimer=setTimeout(resized,500);return;}

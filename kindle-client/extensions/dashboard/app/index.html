@@ -7,7 +7,24 @@ html,body{margin:0;width:100%;height:100%;background:white;color:black;font-fami
 #controls{position:absolute;left:8px;right:8px;top:6px;height:50px;text-align:center;white-space:nowrap;font-size:0;line-height:0}
 button{vertical-align:top;box-sizing:border-box;font-size:22px;height:50px;padding:8px 0;background:white;border:2px solid black;width:32%;margin:0 0.5%;border-radius:7px}
 #message{display:none;position:absolute;z-index:2;top:76px;left:24px;right:24px;padding:16px;background:white;border:2px solid black;font-size:20px;text-align:center}
+#report{display:none;position:absolute;top:0;left:0;right:0;bottom:0;background:white}
+#report-window{position:absolute;top:10px;left:18px;right:18px;bottom:54px;overflow:hidden}
+#report-content{height:100%;-webkit-column-count:1;column-count:1;-webkit-column-gap:24px;column-gap:24px;-webkit-column-fill:auto;column-fill:auto;font-family:serif;line-height:1.35;word-wrap:break-word}
+#report-content p{margin:0 0 .65em;orphans:2;widows:2}
+#report-content h1,#report-content h2,#report-content h3,#report-content h4,#report-content h5,#report-content h6{font-size:1.1em;margin:.6em 0 .35em;-webkit-column-break-after:avoid;break-after:avoid}
+#report-content ul,#report-content ol{padding-left:1.25em;margin:0 0 .6em}
+#report-content li{margin-bottom:.3em}
+#report-content pre{white-space:pre-wrap;font-size:.85em;word-wrap:break-word}
+#report-content blockquote{margin:.5em 0;padding-left:.6em;border-left:2px solid #777}
+#report-content table{border-collapse:collapse;width:100%;table-layout:fixed;font-size:.85em}
+#report-content th,#report-content td{border:1px solid #888;padding:.25em;word-wrap:break-word}
+#report-content .report-link{text-decoration:underline}
+#report-footer{position:absolute;bottom:0;left:18px;right:18px;height:46px;border-top:1px solid #aaa;font-size:18px;line-height:44px}
+#report-footer button{width:54px;height:42px;font-size:22px;padding:4px;margin:2px 6px 0 0;border-width:1px}
+#report-position{float:right}
+#report-date{margin-left:10px}
+@media(max-width:600px){#report-footer{font-size:12px;line-height:36px}#report-footer button{width:40px;height:34px;font-size:16px;margin-right:4px}#report-date{margin-left:4px}}
 </style><script src="session.js"></script></head><body>
-<div id="screen"><img id="image" alt="Dashboard"><div id="empty">Opening Dashboard&#8230;<br>Please wait.</div></div>
+<div id="screen"><img id="image" alt="Dashboard"><div id="report"><div id="report-window"><article id="report-content"></article></div><div id="report-footer"><button id="text-smaller" aria-label="Smaller report text">A−</button><button id="text-larger" aria-label="Larger report text">A+</button><span id="report-date"></span><span id="report-position"></span></div></div><div id="empty">Opening Dashboard&#8230;<br>Please wait.</div></div>
 <div id="controls"><button id="previous">Previous</button><button id="refresh">Refresh</button><button id="next">Next</button></div>
-<div id="message"></div><script src="app.js"></script></body></html>
+<div id="message"></div><script src="markdown-it.min.js"></script><script src="report-reader.js"></script><script src="app.js"></script></body></html>

@@ -1,5 +1,9 @@
 # Paginated stock updates
 
+Updated clients can now render the original Markdown locally, with A−/A+ text
+controls and no report images in their bundle. See [local Markdown](local-markdown.md).
+The PNG path described below remains available for older clients and NAS previews.
+
 The stock-update pages display the original Markdown `content` from the NAS
 Discord publisher's dated digest archive. Dashboard does not generate another
 summary, call a model, contact Discord, or execute the report's trading ideas.

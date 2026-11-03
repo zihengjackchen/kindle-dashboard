@@ -71,12 +71,21 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                 data.model_copy(update={"page": page}), settings, now, snapshot, value
             )).decode("ascii") for page in value.page_order}
             client = client_settings(value)
-            if value.report_enabled:
+            report = None
+            if value.report_enabled and data.report_format == "markdown":
+                original = reports.get()
+                report = {"markdown": original.content if original else "No saved stock update is available yet.",
+                          "day": original.day if original else "unavailable",
+                          "generated_at": original.generated_at if original else "",
+                          "font_size": value.report_font_size}
+                client["pages"].append({"id": "finance", "name": "Finance report"})
+            elif value.report_enabled:
                 for index, png in enumerate(report_images(data, value.report_font_size), 1):
                     page = f"report-{index}"
                     images[page] = base64.b64encode(png).decode("ascii")
                     client["pages"].append({"id": page, "name": f"Stock update {index}"})
-            payload = json.dumps({"version": 1, "width": data.width, "height": data.height,
+            payload = json.dumps({"version": 2 if data.report_format == "markdown" else 1,
+                                  "report": report, "width": data.width, "height": data.height,
                                   "generated_at": now.isoformat(), "battery": data.battery,
                                   "charging": data.charging, "settings": client,
                                   "images": images}, separators=(",", ":")).encode()

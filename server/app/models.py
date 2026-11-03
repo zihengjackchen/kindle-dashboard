@@ -9,6 +9,7 @@ PAGE_IDS = ("overview", "weather", "markets-1", "markets-2", "nas")
 
 
 class DashboardRequest(BaseModel):
+    report_format: Literal["png", "markdown"] = "png"
     page: Literal["overview", "weather", "markets-1", "markets-2", "nas"] = "overview"
     width: int = Field(default=1236, gt=0, le=100_000)
     height: int = Field(default=1648, gt=0, le=100_000)

@@ -15,7 +15,7 @@ app_cleanup() {
     done
     probe lipc-set-prop com.lab126.appmgrd stop app://org.kindledashboard.app >/dev/null || :
     rm -f "$STATE_DIR/app.pid" "$STATE_DIR/app-key" "$STATE_DIR/app-heartbeat" "$STATE_DIR/active"
-    rm -f "$STATE_DIR/web/$APP_KEY/index.html" "$STATE_DIR/web/$APP_KEY/app.js" "$STATE_DIR/web/$APP_KEY/session.js"
+    rm -f "$STATE_DIR/web/$APP_KEY/index.html" "$STATE_DIR/web/$APP_KEY/"*.js
     rmdir "$STATE_DIR/web/$APP_KEY" 2>/dev/null || :
     if [ -n "$RUNTIME" ]; then rm -f "$RUNTIME/events"; rmdir "$RUNTIME" 2>/dev/null || :; fi
     rmdir "$STATE_DIR/app.lock" 2>/dev/null || :

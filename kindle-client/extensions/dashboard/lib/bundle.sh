@@ -31,6 +31,7 @@ bundle_action() {
             # Keep existing telemetry/auth/deadline rules; change only endpoint/type.
             DASHBOARD_URL=${DASHBOARD_URL%/dashboard.png}/dashboard-bundle.json
             build_url || { respond '{"error":"Invalid server URL"}'; return; }
+            REQUEST_URL="$REQUEST_URL&report_format=markdown"
             # Consumed by record_fetch in the sourced client library.
             # shellcheck disable=SC2034
             FETCH_STARTED=$(date +%s)

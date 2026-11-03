@@ -73,6 +73,24 @@ def test_report_bundle_and_authenticated_preview(tmp_path):
     assert len(client.get('/dashboard-bundle.json').json()['images']) == 5
 
 
+def test_markdown_capability_sends_original_text_not_report_images(tmp_path, monkeypatch):
+    value = archive(tmp_path)
+    path = tmp_path / 'layout.json'
+    path.write_text(json.dumps({'page_order':['overview'],'report_enabled':True}))
+    client = TestClient(create_app(Settings(report_directory=str(tmp_path),layout_path=str(path))))
+    def forbidden(*args):
+        raise AssertionError('Markdown clients must not render text to PNG')
+    monkeypatch.setattr('app.main.render_report',forbidden)
+    response=client.get('/dashboard-bundle.json?report_format=markdown&width=1056&height=1162')
+    assert response.status_code == 200
+    data=response.json()
+    assert data['version']==2 and set(data['images'])=={'overview'}
+    assert [p['id'] for p in data['settings']['pages']]==['overview','finance']
+    assert data['report']['markdown']==value['content']
+    assert data['report']['day']=='2026-11-02'
+    assert client.get('/dashboard-bundle.json?report_format=html').status_code==422
+
+
 def test_limits_fail_instead_of_truncating():
     with pytest.raises(ValueError, match="27 pages"):
         paginate([([('text',)], 20)] * 28, 20)

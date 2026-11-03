@@ -328,3 +328,39 @@ without a server update.
   retention, malformed snapshots, authentication, rendering and the bundle path.
 - Source rollback: /mnt/Main/kindle-dashboard/usage-before-20261011.tar.gz.
   Prior layout: .tools/layout-before-codex.json (private, not committed).
+# Stock report pages and hardware light-off — November 2, 2026
+
+Deployed the original Discord digest `content` as paginated PNGs, with no added
+title or rewritten summary. The physical app requested 1056×1162 and decoded
+and atomically committed eight images: five dashboard pages plus three pages
+for the November 2 report. The existing single-request bundle carries all pages.
+Verified the live NAS editor's report preview and next/previous controls.
+
+The host exporter copies only the original text, source date and generation time
+from the private publisher archive into a restricted directory readable by the
+dashboard UID. The existing 15-minute NAS export job also updates this file.
+Publisher archives, other cron jobs, layout widgets and credentials were retained.
+
+On this Kindle, native brightness 18 corresponded to raw/actual brightness 1382.
+Dashboard launch produced native/target/actual readings of 0/0/0. Stop restored
+18/1382; reopening returned the hardware reading to zero. A controlled native
+relight produced actual brightness 2; the foreground power handler returned it
+to 0 without overwriting the saved 18/1382 restoration values.
+
+A power-button-property test did not produce an observed sleep transition in the
+SSH debugging session. Physical wake behavior and darkness by visual inspection
+remain unconfirmed; no overnight battery-life claim is made. Shared shell tests
+cover a relight during wake, repeated calls, foreground scoping, failed restoration
+and recovery-state retention. No additional polling loop was introduced.
+
+Local tests: 214 passed, one skipped, plus the separate exporter test passed.
+Browser checks covered report pagination, editor saves, six extra cached pages,
+corrupt-page rejection and offline retention. ShellCheck passed. GitHub workflow
+41571739231 passed all 216 Linux tests, Docker smoke test and amd64/arm64 publication.
+
+The NAS package-install build was cancelled during slow disk writes. Deployment
+reused the backed-up dependency image, copied current app code and the two Noto
+CJK fonts plus license from the authenticated Debian package. The normal public
+Dockerfile built successfully in GitHub. The NAS keeps its previous image and
+configuration under the November 2 deployment backup for rollback.
+
